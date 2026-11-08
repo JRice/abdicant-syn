@@ -10,6 +10,7 @@
 #include "pluginterfaces/vst/ivsteditcontroller.h"
 #include "pluginterfaces/vst/ivstmidicontrollers.h"
 #include "pluginterfaces/gui/iplugview.h"
+#include "pluginterfaces/gui/iplugviewcontentscalesupport.h"
 #include "public.sdk/source/vst/hosting/hostclasses.h"
 #include "public.sdk/source/vst/hosting/eventlist.h"
 #include "public.sdk/source/vst/hosting/parameterchanges.h"
@@ -81,6 +82,9 @@ int main(){try{
     component->setActive(true);processor->setProcessing(true);
     HWND parent=CreateWindowExW(0,L"STATIC",L"VST3 test host",WS_OVERLAPPEDWINDOW,0,0,1320,810,nullptr,nullptr,GetModuleHandleW(nullptr),nullptr);check(parent,"Parent window");
     for(int cycle=0;cycle<12;++cycle){auto* view=controller->createView(ViewType::kEditor);check(view,"Create editor");
+        if(cycle==0){IPlugViewContentScaleSupport* scaling=nullptr;
+            check(view->queryInterface(IPlugViewContentScaleSupport::iid,reinterpret_cast<void**>(&scaling))==kResultOk,"VST3 scaling interface");
+            check(scaling->setContentScaleFactor(1.5f)==kResultFalse,"VST3 first-open scale hint declined");scaling->release();}
         check(view->attached(parent,kPlatformTypeHWND)==kResultOk,"Attach editor");ViewRect bounds;view->getSize(&bounds);check(bounds.getWidth()==1300 && bounds.getHeight()==765,"Editor dimensions");
         HWND child=GetWindow(parent,GW_CHILD);check(child,"Native editor exists");
         {Gdiplus::Bitmap bitmap(1300,765,PixelFormat32bppARGB);Gdiplus::Graphics graphics(&bitmap);HDC dc=graphics.GetHDC();SendMessageW(child,WM_PRINTCLIENT,reinterpret_cast<WPARAM>(dc),PRF_CLIENT);graphics.ReleaseHDC(dc);

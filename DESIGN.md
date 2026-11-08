@@ -102,3 +102,15 @@ Build-vst3.ps1 runs the existing CLAP checks, VST3 integration checks and offici
 ## Vector interface (0.5.0)
 
 Shiboleth now renders panel, recesses, bezel, typography, symbols, buttons and knobs using GDI+ vector primitives, paths and gradients. Existing control coordinates and behavior are retained. Sparse deterministic vector stippling approximates the powder-coat finish. The static faceplate is raster-cached only at the actual host pixel size for repaint efficiency; no source bitmap assets or per-angle knob frames are used. Knob pointers and grooves rotate while lighting remains fixed. The prior PNGs remain as reference material; the RC resource now contains only version metadata. Sound, patch data and Imperius remain unchanged.
+
+## Initial editor size correction (0.5.1)
+
+The fixed panel size is 1300 x 765 physical Windows pixels. guiScale previously multiplied these dimensions by host DPI hints, but newly created editors reset to the unscaled size. Hosts sending a hint only on first creation could therefore show a large first window and a smaller reopened one. Host scaling hints are now explicitly declined per the CLAP GUI contract; the VST3 wrapper forwards that result. Regression tests cover a first-open 150% hint, reopening without another hint, repeated scale requests, native child bounds and a fresh instrument instance with a 200% hint.
+
+## Rapid selector clicks (0.5.2)
+
+Windows replaces the second button-down in a rapid pair with WM_LBUTTONDBLCLK. The prior generic handler reset all parameters to their defaults, causing resonance and octave to alternate instead of cycling. Discrete selectors now treat this message as another ordinary click; continuous controls retain double-click reset. This also covers waveform and aftertouch selectors and the Options button. Regression tests send the Windows rapid-click message sequence through two complete cycles of each parameter selector and verify both values and automation gesture boundaries.
+
+## Live scope cycle boundary (0.5.3)
+
+Scope capture no longer interpolates across phase wrap. The first new sample anchors the beginning of the new cycle and the prior sample finishes the previous one. A pending buffer publishes only complete cycles; the display draws an explicit last-to-first edge at its left boundary. This preserves live post-treatment capture while preventing square-wave wrap interpolation from causing flicker. Tests vary pitch and sample rate and verify that changed oscillator levels continue to appear. Rapid-click tests now include waveform displays and the aftertouch text display in addition to their buttons.

@@ -40,6 +40,18 @@ void coreTests() {
      checkNear(silent.ampEnvelope.value,0,0,"Held zero sustain reaches zero after twice decay");
      checkNear(silent.next(),0,1e-10,"Held zero sustain is silent");}
 
+    // Incommensurate sample/pitch ratios move each cycle crossing between
+    // samples. A discontinuity must not produce a varying interpolated start.
+    for(double fs:{176400.,192000.,384000.})for(double hz:{55.123,440.31,3500.7}){
+        syn::ScopeTrace trace;double phase=.137;int completed=0;
+        for(int i=0;i<int(fs*.2);++i){auto before=trace.samples;double old=phase;
+            phase+=hz/fs;phase-=std::floor(phase);trace.push(phase,phase<.5?1:-1);
+            if(phase<old && ++completed>2){checkNear(trace.samples[0],1,0,"Square scope start remains stable across fractional crossings");checkNear(trace.samples[127],-1,0,"Scope captures end of cycle");}
+            else if(phase>=old)check(trace.samples==before,"Displayed scope changes only on completed cycles");
+        }
+        for(int i=0;i<int(fs/hz*3);++i){phase+=hz/fs;phase-=std::floor(phase);trace.push(phase,phase<.5?.3:-.7);}
+        checkNear(trace.samples[0],.3,1e-6,"Scope remains live when oscillator amplitude changes");
+    }
     { syn::Engine scoped; scoped.captureScopes=true; scoped.noteOn(48,1);
       for(int i=0;i<6000;++i) scoped.next();
       const auto original=scoped.scopes[0].samples;

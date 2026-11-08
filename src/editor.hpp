@@ -112,8 +112,9 @@ class Editor {
         using namespace Gdiplus;
         std::array<float,128> samples{}; hooks.scope(hooks.context,osc,samples.data(),samples.size());
         auto state=g.Save();g.SetClip(RectF(x-52,109,104,85),CombineModeIntersect);
-        std::array<PointF,128> points{};
-        for(size_t i=0;i<samples.size();++i)points[i]=PointF(x-49+98*float(i)/127,153-33*std::clamp(samples[i],-1.2f,1.2f));
+        std::array<PointF,129> points{};
+        points[0]=PointF(x-49,153-33*std::clamp(samples.back(),-1.2f,1.2f));
+        for(size_t i=0;i<samples.size();++i)points[i+1]=PointF(x-49+98*float(i)/127,153-33*std::clamp(samples[i],-1.2f,1.2f));
         Pen glow(Color(28,237,224,197),5);Pen line(Color(255,237,224,197),2.2f);
         g.DrawLines(&glow,points.data(),int(points.size()));g.DrawLines(&line,points.data(),int(points.size()));g.Restore(state);
     }
@@ -227,7 +228,17 @@ class Editor {
         }
         case WM_LBUTTONUP:stopDrag();InvalidateRect(window,nullptr,FALSE);return 0;
         case WM_CAPTURECHANGED:if(drag>=0){int id=controls[size_t(drag)].id;drag=-1;hooks.end(hooks.context,id);}return 0;
-        case WM_LBUTTONDBLCLK:{stopDrag();int i=hit(x,y);if(i>=0 && controls[size_t(i)].id>=0)changeOnce(i,syn::definitions[controls[size_t(i)].id].initial);InvalidateRect(window,nullptr,FALSE);return 0;}
+        case WM_LBUTTONDBLCLK:{
+            // Windows substitutes this message for the second button-down in
+            // a fast pair. Selectors must count it as another click, not reset.
+            stopDrag();int i=hit(x,y);
+            if(i>=0){const auto& c=controls[size_t(i)];
+                if(c.kind==Kind::Options || (c.id>=0 && syn::definitions[c.id].stepped))
+                    return message(WM_LBUTTONDOWN,wp,lp);
+                if(c.id>=0)changeOnce(i,syn::definitions[c.id].initial);
+            }
+            InvalidateRect(window,nullptr,FALSE);return 0;
+        }
         case WM_RBUTTONUP:{int i=hit(x,y);if(i>=0){POINT pt{GET_X_LPARAM(lp),GET_Y_LPARAM(lp)};ClientToScreen(window,&pt);menu(i,pt);}return 0;}
         case WM_MOUSEWHEEL: {
             POINT pt{GET_X_LPARAM(lp),GET_Y_LPARAM(lp)};ScreenToClient(window,&pt);int i=hit(pt.x*designWidth/width,pt.y*designHeight/height);

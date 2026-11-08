@@ -10,7 +10,7 @@
 namespace {
 constexpr clap_id firstId=1000;
 const char* features[]={CLAP_PLUGIN_FEATURE_INSTRUMENT,CLAP_PLUGIN_FEATURE_SYNTHESIZER,CLAP_PLUGIN_FEATURE_STEREO,nullptr};
-const clap_plugin_descriptor_t descriptor={CLAP_VERSION_INIT,"local.abdicant.mono.prototype","Shiboleth","Personal instruments","","","","0.5.0","Two oscillator mono synthesizer",features};
+const clap_plugin_descriptor_t descriptor={CLAP_VERSION_INIT,"local.abdicant.mono.prototype","Shiboleth","Personal instruments","","","","0.5.3","Two oscillator mono synthesizer",features};
 struct Plugin {
     clap_plugin_t api{};
     const clap_host_t* host;
@@ -256,7 +256,10 @@ bool CLAP_ABI guiCreate(const clap_plugin_t* p,const char* api,bool floating){
 void CLAP_ABI guiDestroy(const clap_plugin_t* p){self(p).scopesEnabled.store(false);self(p).editor.reset();}
 bool CLAP_ABI guiSize(const clap_plugin_t* p,uint32_t* w,uint32_t* h){if(!self(p).editor)return false;self(p).editor->dimensions(w,h);return true;}
 bool CLAP_ABI guiResize(const clap_plugin_t* p,uint32_t w,uint32_t h){if(!self(p).editor)return false;uint32_t currentW,currentH;self(p).editor->dimensions(&currentW,&currentH);return w==currentW && h==currentH;}
-bool CLAP_ABI guiScale(const clap_plugin_t* p,double scale){if(!self(p).editor || !std::isfinite(scale)||scale<.6||scale>1.8)return false;return self(p).editor->size(uint32_t(std::round(ui::preferredWidth*scale)),uint32_t(std::round(ui::preferredHeight*scale)));}
+// The approved size is already in physical Windows pixels. Host scale hints
+// are deliberately declined, so initial creation and recreation agree even
+// when a host sends its DPI hint only on the first opening.
+bool CLAP_ABI guiScale(const clap_plugin_t*,double){return false;}
 bool CLAP_ABI guiCanResize(const clap_plugin_t*){return false;}
 bool CLAP_ABI guiHints(const clap_plugin_t*,clap_gui_resize_hints_t*){return false;}
 bool CLAP_ABI guiAdjust(const clap_plugin_t*,uint32_t*,uint32_t*){return false;}

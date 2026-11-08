@@ -156,15 +156,25 @@ struct Decimator {
     double output() const { double y=0; int j=cursor; for(int i=0;i<taps;++i) { j=(j+taps-1)%taps; y+=weights[i]*history[j]; } return y; }
 };
 struct ScopeTrace {
-    std::array<float,128> samples{};
+    std::array<float,128> samples{},pending{};
     double previousPhase=0,previousSample=0;
-    bool ready=false;
+    bool ready=false,collecting=false;
     void push(double phase,double sample) {
         if(!ready){previousPhase=phase;previousSample=sample;ready=true;return;}
-        double travel=phase-previousPhase;if(travel<0)travel+=1;
+        double travel=phase-previousPhase;const bool wrapped=travel<0;if(wrapped)travel+=1;
         if(travel>0 && travel<0.5){
-            int first=int(std::floor(previousPhase*128))+1,last=int(std::floor((previousPhase+travel)*128));
-            for(int i=first;i<=last;++i){double t=(i/128.0-previousPhase)/travel;samples[size_t(i%128)]=float(previousSample+(sample-previousSample)*t);}
+            if(wrapped){
+                // Never interpolate through the cycle's discontinuity: retain
+                // the last measured value on the left side and the first new
+                // sample on the right. Publish only a completed captured cycle.
+                for(int i=int(std::floor(previousPhase*128))+1;i<128;++i)pending[i]=float(previousSample);
+                if(collecting)samples=pending;
+                collecting=true;
+                for(int i=0;i<=int(std::floor(phase*128));++i)pending[i]=float(sample);
+            }else if(collecting){
+                int first=int(std::floor(previousPhase*128))+1,last=int(std::floor(phase*128));
+                for(int i=first;i<=last;++i){double t=(i/128.0-previousPhase)/travel;pending[i]=float(previousSample+(sample-previousSample)*t);}
+            }
         }
         previousPhase=phase;previousSample=sample;
     }
