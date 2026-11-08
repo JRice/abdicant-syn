@@ -11,7 +11,7 @@ try {
     $resourceCompiler = Join-Path (Split-Path -Parent $Compiler) 'windres.exe'
     & $resourceCompiler '-I' 'src' 'src/resources.rc' '-O' 'coff' '-o' 'build/resources.o'
     if ($LASTEXITCODE -ne 0) { throw 'Resource compilation failed.' }
-    & $Compiler @compilerFlags '-shared' 'src/plugin.cpp' 'build/resources.o' '-lgdiplus' '-lole32' '-lgdi32' '-luser32' '-o' 'build/Shiboleth.clap'
+    & $Compiler @compilerFlags '-shared' 'src/plugin.cpp' 'build/resources.o' '-lgdiplus' '-lole32' '-lgdi32' '-luser32' '-o' 'build/Shibboleth.clap'
     if ($LASTEXITCODE -ne 0) { throw 'Plugin compilation failed.' }
     # Remove only the superseded generated filename, avoiding duplicate plug-in IDs.
     if (Test-Path -LiteralPath 'build/MonoStudy.clap') { Remove-Item -LiteralPath 'build/MonoStudy.clap' }

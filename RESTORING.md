@@ -1,6 +1,6 @@
 # Preserving and restoring this repository
 
-This repository includes Shiboleth and the existing `imperius/` instrument:
+This repository includes Shibboleth and the existing `imperius/` instrument:
 source code, tests, build scripts, artwork, design notes and documentation.
 Downloaded dependencies and generated `build/` directories are intentionally
 ignored. Our dependency notes, third-party notices and wrapper patch are tracked.
@@ -31,7 +31,7 @@ For CLAP-only builds, only the CLAP dependency is needed.
 ## Build
 
 ```powershell
-./build.ps1                 # Shiboleth CLAP + tests
+./build.ps1                 # Shibboleth CLAP + tests
 ./build-vst3.ps1            # Both formats, tests, VST3 validator, sharing ZIP
 ./imperius/build.ps1        # Imperius CLAP + tests
 ```

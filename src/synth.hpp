@@ -10,7 +10,7 @@ constexpr double ceiling = 0.8413951416451951; // -1.5 dBFS, sample peak
 enum Param { Wave1, Reduce1, Alt1, Noise1, SquishRate1, SquishDepth1,
     Wave2, Reduce2, Alt2, Noise2, SquishRate2, SquishDepth2, Level2, Tune2,
     Cutoff, Resonance, FilterAmount, Attack, Decay, Sustain, Release,
-    Velocity, Glide, VibratoRate, AftertouchTarget, AftertouchDepth, Volume, NoiseCutoff, CrushEnv1, AltEnv1, NoiseEnv1, CrushEnv2, AltEnv2, NoiseEnv2, Octave, Count };
+    Velocity, Glide, VibratoRate, AftertouchTarget, AftertouchDepth, Volume, NoiseCutoff, CrushEnv1, AltEnv1, NoiseEnv1, CrushEnv2, AltEnv2, NoiseEnv2, Octave, FilterAlgorithm, Count };
 struct Definition { const char* name; const char* group; double min, max, initial; bool stepped; };
 inline constexpr std::array<Definition, Count> definitions {{
     {"Wave", "Oscillator 1",0,6,1,true}, {"Crush", "Oscillator 1",0,1,0,false},
@@ -33,7 +33,8 @@ inline constexpr std::array<Definition, Count> definitions {{
     {"Noise AM envelope", "Oscillator 1",-1,1,0,false},
     {"Crush envelope", "Oscillator 2",-1,1,0,false}, {"Alt envelope", "Oscillator 2",-1,1,0,false},
     {"Noise AM envelope", "Oscillator 2",-1,1,0,false},
-    {"Octave", "Oscillator 1",-2,1,0,true}
+    {"Octave", "Oscillator 1",-2,1,0,true},
+    {"Algorithm", "Filter",0,3,0,true}
 }};
 using Values = std::array<double, Count>;
 inline Values defaults() { Values v{}; for (int i=0;i<Count;++i) v[i]=definitions[i].initial; return v; }
@@ -179,6 +180,72 @@ struct ScopeTrace {
         previousPhase=phase;previousSample=sample;
     }
 };
+// Character models, not component-calibrated hardware emulations. All branches
+// run continuously so switching never exposes stale integrator state.
+struct CharacterFilters {
+    double wasp1=0,wasp2=0,waspDcInput=0,waspDcOutput=0;
+    std::array<double,4> ladder{},ota{};
+    std::array<double,4> weights{1,0,0,0};
+    static double inverter(double x) {
+        // Unequal positive/negative headroom; exactly zero at zero input.
+        return (std::tanh(1.7*x+0.18)-std::tanh(0.18))/1.646;
+    }
+    static double fourPole(double input,double g,double resonance,
+                           std::array<double,4>& state,bool isOta) {
+        const double G=g/(1+g), feedback=(isOta?4.05:4.15)*resonance;
+        const double drive=isOta?1.45:1.8;
+        // Solve current-sample global feedback, including stage saturation.
+        // Monotone transfer gives a positive Newton denominator at every step.
+        const auto cascade=[&](double u,std::array<double,4>& y,double& derivative) {
+            derivative=1;
+            for(int j=0;j<4;++j) {
+                const double t=std::tanh(u*(isOta?0.65:1.0));
+                const double shaped=isOta?t/0.65:t;
+                derivative*=G*(1-t*t);
+                y[j]=G*shaped+(1-G)*state[j];u=y[j];
+            }
+            return u;
+        };
+        double u=input*drive;std::array<double,4> y{};
+        for(int n=0;n<6;++n) {
+            double derivative;const double output=cascade(u,y,derivative);
+            u-=(u+feedback*output-input*drive)/(1+feedback*derivative);
+        }
+        double derivative;const double output=cascade(u,y,derivative);
+        for(int j=0;j<4;++j)state[j]=2*y[j]-state[j];
+        // Partial bass compensation on ladder; stronger compensation on OTA.
+        const double gain=(1+(isOta?0.72:0.40)*feedback)/drive;
+        return isOta?inverter(output*gain*0.9)/0.9:output*gain;
+    }
+    double wasp(double input,double g,double res,double dcPole) {
+        // Apply asymmetric coloration to audio, never to stored integrator state:
+        // repeatedly biasing the state creates spurious DC attractors at low cutoff.
+        const double k=2-1.82*res,a=1/(1+g*(g+k));
+        const double v1=a*(wasp1+g*(inverter(input*1.2)-wasp2));
+        const double v2=wasp2+g*v1;
+        wasp1=2*v1-wasp1;
+        wasp2=2*v2-wasp2;
+        const double colored=inverter(v2*1.35)/1.2;
+        // Asymmetric audio distortion still rectifies; remove its DC locally so
+        // it cannot consume limiter headroom or affect the other algorithms.
+        const double result=colored-waspDcInput+dcPole*waspDcOutput;
+        waspDcInput=colored;waspDcOutput=result;
+        return result;
+    }
+    double next(double input,double original,double g,double res,int mode,double fade,
+                double sampleRate=192000) {
+        const double waspOutput=wasp(input,g,res,std::exp(-2*pi*5/sampleRate));
+        const std::array<double,4> output{original,waspOutput,
+            fourPole(input,g,res,ladder,false),fourPole(input,g,res,ota,true)};
+        double sum=0;
+        for(int i=0;i<4;++i) {
+            weights[i]+=fade*((i==mode?1.:0.)-weights[i]);
+            sum+=weights[i]*output[i];
+        }
+        return sum;
+    }
+};
+
 struct Engine {
     Values values=defaults(), smooth=defaults();
     double sampleRate=48000, pitch=60, targetPitch=60, glideIncrement=0;
@@ -191,6 +258,7 @@ struct Engine {
     ScopeTrace scopes[2];
     bool captureScopes=false;
     Decimator decimator;
+    CharacterFilters filters;
     double ic1=0,ic2=0,dcInput=0,dcOutput=0,limiterGain=1;
     Engine() { osc2.rng=0x12bd871f; osc2.phase=osc2.hiddenPhase=0.43; }
     void reset(double rate) { *this=Engine(); sampleRate=rate; }
@@ -230,7 +298,7 @@ struct Engine {
     }
     void allOff(bool immediate) {
         noteCount=0; filterEnvelope.off(); ampEnvelope.off();
-        if(immediate) { filterEnvelope={}; ampEnvelope={}; ic1=ic2=0; decimator.history.fill(0); dcInput=dcOutput=0; }
+        if(immediate) { filterEnvelope={}; ampEnvelope={}; ic1=ic2=0; filters={}; decimator.history.fill(0); dcInput=dcOutput=0; }
     }
     double next() {
         double smoothing=1-std::exp(-1/(0.004*sampleRate));
@@ -275,7 +343,8 @@ struct Engine {
             double a1=1/(1+g*(g+k));
             double v1=a1*(ic1+g*(dc-ic2)), v2=ic2+g*v1;
             ic1=4*std::tanh((2*v1-ic1)/4); ic2=4*std::tanh((2*v2-ic2)/4);
-            decimator.push(std::tanh(v2*1.25)*ae*sensitivity*smooth[Volume]*1.4);
+            const double filtered=filters.next(dc,v2,g,resonantValue,int(smooth[FilterAlgorithm]),1-std::exp(-1/(0.005*fs)),fs);
+            decimator.push(std::tanh(filtered*1.25)*ae*sensitivity*smooth[Volume]*1.4);
         }
         double y=decimator.output();
         double needed=std::abs(y)>ceiling?ceiling/std::abs(y):1;

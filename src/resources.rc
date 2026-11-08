@@ -1,7 +1,7 @@
 #include <windows.h>
 1 VERSIONINFO
-FILEVERSION 0,5,3,0
-PRODUCTVERSION 0,5,3,0
+FILEVERSION 0,6,2,0
+PRODUCTVERSION 0,6,2,0
 FILEOS VOS_NT_WINDOWS32
 FILETYPE VFT_DLL
 BEGIN
@@ -9,9 +9,9 @@ BEGIN
  BEGIN
   BLOCK "040904b0"
   BEGIN
-   VALUE "FileDescription", "Shiboleth synthesizer\0"
-   VALUE "FileVersion", "0.5.3\0"
-   VALUE "ProductName", "Shiboleth\0"
+   VALUE "FileDescription", "Shibboleth synthesizer\0"
+   VALUE "FileVersion", "0.6.2\0"
+   VALUE "ProductName", "Shibboleth\0"
   END
  END
  BLOCK "VarFileInfo"

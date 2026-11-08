@@ -72,7 +72,7 @@ inline void panel(Graphics& g){
     for(float y:{854.f,862.f,870.f})g.DrawLine(&ink,1551.f,y,1575.f,y);
     Pen dotted(Color(150,225,222,207),2);dotted.SetDashStyle(DashStyleDot);g.DrawLine(&dotted,805.f,75.f,805.f,397.f);
     for(float x:{205.f,1013.f,1027.f}){g.DrawLine(&ink,x,97.f,x,125.f);g.DrawLine(&ink,x-5,97.f,x+5,97.f);g.DrawLine(&ink,x-5,125.f,x+5,125.f);}
-    label(g,L"VOL",105,418,110);label(g,L"CUT",200,850,110);label(g,L"RES",364,850,95);label(g,L"ENV",468,850,95);
+    label(g,L"ALG",364,617,95);label(g,L"VOL",105,418,110);label(g,L"CUT",200,850,110);label(g,L"RES",364,850,95);label(g,L"ENV",468,850,95);
     label(g,L"A",710,850,60);label(g,L"D",803,850,60);label(g,L"S",895,850,60);label(g,L"R",988,850,60);
     label(g,L"PORT",1180,665,110);label(g,L"VEL",1346,665,95);label(g,L"VIB",1507,665,95);label(g,L"ATOUCH",1320,850,215);
     mods(g,435,515,588);mods(g,1250,1326,1400);squish(g,688);squish(g,1507);

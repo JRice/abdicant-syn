@@ -20,18 +20,18 @@ try {
     if ($LASTEXITCODE -ne 0) { throw 'Validator configuration failed.' }
     & $cmake --build build/vst3-validator --target validator -j 6
     if ($LASTEXITCODE -ne 0) { throw 'Validator build failed.' }
-    & ./build/vst3-validator/bin/validator.exe build/VST3/Shiboleth.vst3 *> build/vst3-validation.log
+    & ./build/vst3-validator/bin/validator.exe build/VST3/Shibboleth.vst3 *> build/vst3-validation.log
     if ($LASTEXITCODE -ne 0) { throw 'VST3 validation failed; see build/vst3-validation.log.' }
     Get-Content build/vst3-validation.log -Tail 4
-    $release = 'build/Shiboleth-Windows-x64'
+    $release = 'build/Shibboleth-Windows-x64'
     New-Item -ItemType Directory -Force "$release/licenses" | Out-Null
-    Copy-Item -LiteralPath 'build/VST3/Shiboleth.vst3' -Destination $release -Recurse -Force
-    Copy-Item -LiteralPath 'build/Shiboleth.clap' -Destination $release -Force
+    Copy-Item -LiteralPath 'build/VST3/Shibboleth.vst3' -Destination $release -Recurse -Force
+    Copy-Item -LiteralPath 'build/Shibboleth.clap' -Destination $release -Force
     Copy-Item -LiteralPath 'SHARING.txt' -Destination "$release/INSTALL.txt" -Force
     Copy-Item -LiteralPath 'third_party/clap/LICENSE' -Destination "$release/licenses/CLAP.txt" -Force
     Copy-Item -LiteralPath 'third_party/clap-wrapper/LICENSE' -Destination "$release/licenses/CLAP-wrapper.txt" -Force
     Copy-Item -LiteralPath 'third_party/vst3sdk/LICENSE.txt' -Destination "$release/licenses/VST3-SDK.txt" -Force
     Copy-Item -LiteralPath 'third_party/ADDITIONAL-NOTICES.txt' -Destination "$release/licenses/ADDITIONAL-NOTICES.txt" -Force
-    Compress-Archive -Path "$release/*" -DestinationPath 'build/Shiboleth-0.5.3-Windows-x64.zip' -Force
-    Write-Output 'Created build/Shiboleth-0.5.3-Windows-x64.zip'
+    Compress-Archive -Path "$release/*" -DestinationPath 'build/Shibboleth-0.6.2-Windows-x64.zip' -Force
+    Write-Output 'Created build/Shibboleth-0.6.2-Windows-x64.zip'
 } finally { $env:PATH = $previousPath; Pop-Location }

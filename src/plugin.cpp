@@ -10,7 +10,7 @@
 namespace {
 constexpr clap_id firstId=1000;
 const char* features[]={CLAP_PLUGIN_FEATURE_INSTRUMENT,CLAP_PLUGIN_FEATURE_SYNTHESIZER,CLAP_PLUGIN_FEATURE_STEREO,nullptr};
-const clap_plugin_descriptor_t descriptor={CLAP_VERSION_INIT,"local.abdicant.mono.prototype","Shiboleth","Personal instruments","","","","0.5.3","Two oscillator mono synthesizer",features};
+const clap_plugin_descriptor_t descriptor={CLAP_VERSION_INIT,"local.abdicant.mono.prototype","Shibboleth","Personal instruments","","","","0.6.2","Two oscillator mono synthesizer",features};
 struct Plugin {
     clap_plugin_t api{};
     const clap_host_t* host;
@@ -151,7 +151,7 @@ bool CLAP_ABI paramInfo(const clap_plugin_t*,uint32_t i,clap_param_info_t* out) 
     *out={}; const auto& d=syn::definitions[i];
     out->id=firstId+i; out->flags=CLAP_PARAM_IS_AUTOMATABLE;
     out->flags|=d.stepped?CLAP_PARAM_IS_STEPPED|CLAP_PARAM_IS_ENUM:CLAP_PARAM_IS_MODULATABLE;
-    const char* prefix=i==syn::Octave?"OSC1":i>=syn::CrushEnv2?"OSC2":i>=syn::CrushEnv1?"OSC1":i<=syn::SquishDepth1?"OSC1":i<=syn::Tune2?"OSC2":i<=syn::FilterAmount?"FILTER":i<=syn::Release?"ENV":i<=syn::AftertouchDepth?"PERF":i==syn::Volume?"OUT":"OPTIONS";
+    const char* prefix=i==syn::FilterAlgorithm?"FILTER":i==syn::Octave?"OSC1":i>=syn::CrushEnv2?"OSC2":i>=syn::CrushEnv1?"OSC1":i<=syn::SquishDepth1?"OSC1":i<=syn::Tune2?"OSC2":i<=syn::FilterAmount?"FILTER":i<=syn::Release?"ENV":i<=syn::AftertouchDepth?"PERF":i==syn::Volume?"OUT":"OPTIONS";
     std::snprintf(out->name,sizeof out->name,"%s: %s",prefix,d.name); std::snprintf(out->module,sizeof out->module,"%s",d.group);
     out->min_value=d.min; out->max_value=d.max; out->default_value=d.initial; return true;
 }
@@ -166,6 +166,7 @@ bool CLAP_ABI paramText(const clap_plugin_t*,clap_id id,double v,char* out,uint3
     const char* resonances[]={"ooo (0)","*oo (0.1)","**o (0.5)","*** (0.95)"};
     const char* targets[]={"Cutoff","Resonance","Osc 2 mix","Osc 1 Alt","Osc 2 Alt","Osc 1 + 2 Alt"};
     if(i==syn::Wave1 || i==syn::Wave2) std::snprintf(out,size,"%s",waves[int(v)]);
+    else if(i==syn::FilterAlgorithm) { const char* names[]={"Original","Wasp","Ladder","OTA"}; std::snprintf(out,size,"%s",names[int(v)]); }
     else if(i==syn::Octave) std::snprintf(out,size,"%+d oct",int(v));
     else if(i==syn::Resonance) std::snprintf(out,size,"%s",resonances[int(v)]);
     else if(i==syn::AftertouchTarget) std::snprintf(out,size,"%s",targets[int(v)]);
@@ -208,7 +209,7 @@ bool readAll(const clap_istream_t* s,void* data,uint64_t size) {
 }
 bool CLAP_ABI save(const clap_plugin_t* p,const clap_ostream_t* stream) {
     syn::Values values{}; for(int i=0;i<syn::Count;++i) values[i]=self(p).base[i].load();
-    return writeAll(stream,"ASYN0004",8) && writeAll(stream,values.data(),sizeof values);
+    return writeAll(stream,"ASYN0005",8) && writeAll(stream,values.data(),sizeof values);
 }
 bool CLAP_ABI load(const clap_plugin_t* p,const clap_istream_t* stream) {
     char magic[8]; syn::Values values=syn::defaults();
@@ -216,8 +217,9 @@ bool CLAP_ABI load(const clap_plugin_t* p,const clap_istream_t* stream) {
     const bool legacy=std::memcmp(magic,"ASYN0001",8)==0;
     const bool version2=std::memcmp(magic,"ASYN0002",8)==0;
     const bool version3=std::memcmp(magic,"ASYN0003",8)==0;
-    if(!legacy && !version2 && !version3 && std::memcmp(magic,"ASYN0004",8)) return false;
-    const size_t bytes=legacy?sizeof(double)*syn::NoiseCutoff:version2?sizeof(double)*syn::CrushEnv1:version3?sizeof(double)*syn::Octave:sizeof values;
+    const bool version4=std::memcmp(magic,"ASYN0004",8)==0;
+    if(!legacy && !version2 && !version3 && !version4 && std::memcmp(magic,"ASYN0005",8)) return false;
+    const size_t bytes=legacy?sizeof(double)*syn::NoiseCutoff:version2?sizeof(double)*syn::CrushEnv1:version3?sizeof(double)*syn::Octave:version4?sizeof(double)*syn::FilterAlgorithm:sizeof values;
     if(!readAll(stream,values.data(),bytes)) return false;
     for(int i=0;i<syn::Count;++i) if(!std::isfinite(values[i]) || values[i]<syn::definitions[i].min || values[i]>syn::definitions[i].max) return false;
     for(int i=0;i<syn::Count;++i) self(p).base[i].store(syn::validValue(i,values[i]));
@@ -234,7 +236,7 @@ bool CLAP_ABI page(const clap_plugin_t*,uint32_t i,clap_remote_controls_page_t* 
         {syn::Wave1,syn::Reduce1,syn::Alt1,syn::Noise1,syn::SquishRate1,syn::SquishDepth1,syn::Octave,-1},
         {syn::Wave2,syn::Reduce2,syn::Alt2,syn::Noise2,syn::SquishRate2,syn::SquishDepth2,syn::Level2,syn::Tune2},
         {syn::Glide,syn::Velocity,syn::VibratoRate,syn::AftertouchTarget,syn::AftertouchDepth,-1,-1,-1}};
-    *out={}; out->page_id=i; std::strcpy(out->section_name,"Shiboleth"); std::strcpy(out->page_name,names[i]);
+    *out={}; out->page_id=i; std::strcpy(out->section_name,"Shibboleth"); std::strcpy(out->page_name,names[i]);
     for(int j=0;j<8;++j) { out->param_ids[j]=ids[i][j]<0?CLAP_INVALID_ID:firstId+ids[i][j]; }
     return true;
 }

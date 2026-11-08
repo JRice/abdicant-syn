@@ -10,6 +10,72 @@
 
 void check(bool condition,const char* why) { if(!condition) throw std::runtime_error(why); }
 void checkNear(double a,double b,double error,const char* why) { check(std::abs(a-b)<=error,why); }
+void filterTests() {
+    // A driven low-cutoff Wasp used to latch around -0.5 even after input stopped.
+    // Test the internal branch as well as audible output: the limiter can hide DC.
+    for(double fs:{32000.,176400.,192000.,384000.})for(double cutoff:{20.,60.,120.,500.})for(double res:{0.,.5,.95}) {
+        syn::CharacterFilters f;
+        const double g=std::tan(syn::pi*cutoff/fs),pole=std::exp(-2*syn::pi*5/fs);
+        for(int n=0;n<int(fs);++n)f.wasp(.7*syn::wave(n*110./fs,1),g,res,pole);
+        for(int n=0;n<int(fs*2);++n)f.wasp(0,g,res,pole);
+        check(std::abs(f.wasp1)<1e-6 && std::abs(f.wasp2)<1e-6,"Wasp state returns to zero after driven low-cutoff input");
+        check(std::abs(f.waspDcOutput)<1e-6,"Wasp output returns to silence without a DC latch");
+    }
+    // Sweep through the reported range in both directions under continuous drive.
+    for(double res:{.5,.95}) {
+        syn::CharacterFilters f;constexpr double fs=48000;
+        double mean=0,energy=0;int count=0;
+        for(int n=0;n<int(fs*4);++n) {
+            double t=n/(fs*4),cutoff=20*std::pow(100.,std::abs(2*t-1));
+            double y=f.wasp(.7*syn::wave(n*110./fs,1),std::tan(syn::pi*cutoff/fs),res,std::exp(-2*syn::pi*5/fs));
+            if(n>=int(fs*3.5)){mean+=y;energy+=y*y;++count;}
+        }
+        check(std::abs(mean/count)<.02,"Wasp sweep does not accumulate output DC");
+        check(std::sqrt(energy/count)>.1,"Wasp recovers audible signal after low-cutoff sweep");
+    }
+    // Small-signal frequency response: same cutoff, different slopes.
+    const auto response=[](int mode,double frequency) {
+        syn::CharacterFilters f;double a=0,b=0,energy=0;
+        const double fs=192000,g=std::tan(syn::pi*1000/fs);
+        for(int n=0;n<40000;++n) {
+            const double input=.001*std::sin(2*syn::pi*frequency*n/fs);
+            const double v1=(a+g*(input-b))/(1+g*(g+2)),v2=b+g*v1;
+            a=2*v1-a;b=2*v2-b;
+            const double y=f.next(input,v2,g,0,mode,.01);
+            if(n>=20000)energy+=y*y;
+        }
+        return std::sqrt(energy/20000);
+    };
+    for(int mode=0;mode<4;++mode) {
+        const double low=response(mode,200),high=response(mode,8000);
+        check(low>0.0001,"Each algorithm passes bass");
+        check(high<low*(mode<2?.04:.002),"Each algorithm has expected low-pass slope");
+    }
+    std::array<std::vector<double>,4> audio;
+    for(int mode=0;mode<4;++mode) {
+        syn::Engine e;e.values[syn::FilterAlgorithm]=mode;e.values[syn::Resonance]=3;e.noteOn(42,1);
+        for(int n=0;n<6000;++n)audio[mode].push_back(e.next());
+    }
+    for(int a=0;a<4;++a)for(int b=a+1;b<4;++b) {
+        double difference=0;for(int n=1000;n<6000;++n)difference+=std::abs(audio[a][n]-audio[b][n]);
+        check(difference>1,"Filter modes produce different audio");
+    }
+    for(double fs:{8000.,44100.,48000.,96000.,384000.}) {
+        syn::Engine e;e.reset(fs);e.noteOn(100,1);e.values[syn::Resonance]=3;
+        for(int n=0;n<12000;++n) {
+            e.values[syn::FilterAlgorithm]=(n/101)%4;e.values[syn::Cutoff]=(n%1000)/999.;
+            const double y=e.next();check(std::isfinite(y)&&std::abs(y)<=syn::ceiling,"Filter switching and sweeps remain bounded");
+            for(double state:e.filters.ladder)check(std::isfinite(state)&&std::abs(state)<10,"Ladder internal stability");
+            for(double state:e.filters.ota)check(std::isfinite(state)&&std::abs(state)<10,"OTA internal stability");
+        }
+    }
+    syn::CharacterFilters fade;double previous=0;
+    for(int n=0;n<3000;++n) {
+        double y=fade.next(0,1,.1,0,n<1000?0:1,.001);
+        if(n>0)check(std::abs(y-previous)<.002,"Algorithm change crossfades without a step");
+        previous=y;
+    }
+}
 void coreTests() {
     for(int octave=-2;octave<=1;++octave){syn::Engine shifted,reference;
         shifted.values[syn::Octave]=octave;shifted.values[syn::Tune2]=reference.values[syn::Tune2]=.7;
@@ -225,9 +291,9 @@ struct Memory {
         auto& m=*static_cast<Memory*>(s->ctx); size_t n=std::min({size_t(size),size_t(5),m.bytes.size()-m.cursor}); std::memcpy(data,m.bytes.data()+m.cursor,n); m.cursor+=n; return n; }};
 };
 void pluginTests() {
-    auto dll=LoadLibraryW(L"build/Shiboleth.clap"); check(dll!=nullptr,"Load CLAP binary");
+    auto dll=LoadLibraryW(L"build/Shibboleth.clap"); check(dll!=nullptr,"Load CLAP binary");
     auto entry=reinterpret_cast<const clap_plugin_entry_t*>(GetProcAddress(dll,"clap_entry")); check(entry!=nullptr,"CLAP entry export");
-    check(entry->init("build/Shiboleth.clap"),"Entry init");
+    check(entry->init("build/Shibboleth.clap"),"Entry init");
     auto factory=static_cast<const clap_plugin_factory_t*>(entry->get_factory(CLAP_PLUGIN_FACTORY_ID)); check(factory && factory->get_plugin_count(factory)==1,"Plugin discovery");
     clap_host_t host{CLAP_VERSION_INIT,nullptr,"Test host","Local","","1",hostExtension,hostRequest,hostRequest,hostRequest};
     auto desc=factory->get_plugin_descriptor(factory,0); auto p=factory->create_plugin(factory,&host,desc->id); check(p && p->init(p),"Plugin init");
@@ -257,6 +323,11 @@ void pluginTests() {
     change.param_id=1000+syn::Octave;change.value=-2;params->flush(p,&single,nullptr);
     Memory octaveState;check(state->save(p,&octaveState.out),"Save octave");change.value=1;params->flush(p,&single,nullptr);
     check(state->load(p,&octaveState.in),"Load octave");params->get_value(p,change.param_id,&restored);checkNear(restored,-2,0,"Octave saved with patch");
+    change.param_id=1000+syn::FilterAlgorithm;change.value=3;params->flush(p,&single,nullptr);
+    Memory algorithmState;check(state->save(p,&algorithmState.out),"Save algorithm");change.value=1;params->flush(p,&single,nullptr);
+    check(state->load(p,&algorithmState.in),"Load algorithm");params->get_value(p,change.param_id,&restored);checkNear(restored,3,0,"Algorithm survives state round trip");
+    Memory version4;version4.bytes=algorithmState.bytes;std::memcpy(version4.bytes.data(),"ASYN0004",8);version4.bytes.resize(8+sizeof(double)*syn::FilterAlgorithm);
+    check(state->load(p,&version4.in),"Load pre-algorithm patch");params->get_value(p,change.param_id,&restored);checkNear(restored,0,0,"Old patches select original filter");
     Memory version3;version3.bytes=current.bytes;std::memcpy(version3.bytes.data(),"ASYN0003",8);version3.bytes.resize(8+sizeof(double)*syn::Octave);
     check(state->load(p,&version3.in),"Load pre-octave patch");params->get_value(p,1000+syn::Octave,&restored);checkNear(restored,0,0,"Old patch retains original pitch");
     params->get_value(p,1000+syn::NoiseEnv2,&restored);checkNear(restored,-.7,1e-12,"Version 3 retains modulation depth");
@@ -301,5 +372,22 @@ void renderDemo() {
     }
     check(bool(file),"Write audition WAV");
 }
-int main() { try { coreTests(); pluginTests(); renderDemo(); std::cout<<"PASS: DSP contracts, stress cases, CLAP binary loading, events, state streams; rendered first-study.wav\n"; return 0; }
+void renderFilters() {
+    constexpr int fs=48000,length=fs*4,count=length*4;
+    std::ofstream file("build/filter-algorithms.wav",std::ios::binary);
+    auto u16=[&](uint16_t x){file.write(reinterpret_cast<char*>(&x),2);};
+    auto u32=[&](uint32_t x){file.write(reinterpret_cast<char*>(&x),4);};
+    file.write("RIFF",4);u32(36+count*2);file.write("WAVEfmt ",8);u32(16);u16(1);u16(1);u32(fs);u32(fs*2);u16(2);u16(16);file.write("data",4);u32(count*2);
+    for(int mode=0;mode<4;++mode) {
+        syn::Engine e;e.values[syn::FilterAlgorithm]=mode;e.values[syn::Resonance]=2;
+        e.values[syn::Cutoff]=.35;e.values[syn::FilterAmount]=.5;
+        for(int n=0;n<length;++n) {
+            if(n%fs==0 && n<fs*3)e.noteOn(36+(n/fs)*7,.9);
+            if(n%fs==fs*3/4)e.allOff(false);
+            const int16_t sample=int16_t(std::round(e.next()*32767));file.write(reinterpret_cast<const char*>(&sample),2);
+        }
+    }
+    check(bool(file),"Write filter audition WAV");
+}
+int main() { try { filterTests(); coreTests(); pluginTests(); renderDemo(); renderFilters(); std::cout<<"PASS: DSP contracts, stress cases, CLAP binary loading, events, state streams; rendered first-study.wav\n"; return 0; }
     catch(const std::exception& error) { std::cerr<<"FAIL: "<<error.what()<<'\n'; return 1; } }

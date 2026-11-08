@@ -1,4 +1,4 @@
-# Shiboleth — working specification
+# Shibboleth — working specification
 
 Status: Windows DSP/CLAP instrument with native graphical editor and automated verification. User has approved the basic tone, waves, Squish, resonance, envelope relationship, glide, and the realistic midnight-blue panel based on their drawing. The actual editor is now built and tested in a local CLAP host; Bitwig-specific editor verification remains pending.
 
@@ -101,7 +101,7 @@ Build-vst3.ps1 runs the existing CLAP checks, VST3 integration checks and offici
 
 ## Vector interface (0.5.0)
 
-Shiboleth now renders panel, recesses, bezel, typography, symbols, buttons and knobs using GDI+ vector primitives, paths and gradients. Existing control coordinates and behavior are retained. Sparse deterministic vector stippling approximates the powder-coat finish. The static faceplate is raster-cached only at the actual host pixel size for repaint efficiency; no source bitmap assets or per-angle knob frames are used. Knob pointers and grooves rotate while lighting remains fixed. The prior PNGs remain as reference material; the RC resource now contains only version metadata. Sound, patch data and Imperius remain unchanged.
+Shibboleth now renders panel, recesses, bezel, typography, symbols, buttons and knobs using GDI+ vector primitives, paths and gradients. Existing control coordinates and behavior are retained. Sparse deterministic vector stippling approximates the powder-coat finish. The static faceplate is raster-cached only at the actual host pixel size for repaint efficiency; no source bitmap assets or per-angle knob frames are used. Knob pointers and grooves rotate while lighting remains fixed. The prior PNGs remain as reference material; the RC resource now contains only version metadata. Sound, patch data and Imperius remain unchanged.
 
 ## Initial editor size correction (0.5.1)
 
@@ -114,3 +114,21 @@ Windows replaces the second button-down in a rapid pair with WM_LBUTTONDBLCLK. T
 ## Live scope cycle boundary (0.5.3)
 
 Scope capture no longer interpolates across phase wrap. The first new sample anchors the beginning of the new cycle and the prior sample finishes the previous one. A pending buffer publishes only complete cycles; the display draws an explicit last-to-first edge at its left boundary. This preserves live post-treatment capture while preventing square-wave wrap interpolation from causing flicker. Tests vary pitch and sample rate and verify that changed oscillator levels continue to appear. Rapid-click tests now include waveform displays and the aftertouch text display in addition to their buttons.
+
+
+## Filter algorithms (0.6.0)
+
+FilterAlgorithm is appended after Octave to retain existing parameter IDs. State ASYN0005 saves it; versions 1-4 migrate to Original. ALG uses the circular three-pip selector above-right of Cutoff.
+
+Original retains its saturated two-pole state-variable DSP unchanged. Wasp-inspired uses two poles with an asymmetric zero-centered inverter transfer on input, integrator state updates, and output, with positive damping. Ladder and OTA-inspired modes use four trapezoidal low-pass stages, stage saturation, and current-sample global feedback solved with six Newton iterations. They differ in saturation headroom, drive, feedback gain, bass compensation and output coloration. These are character approximations, not component-calibrated emulations. The Sub 37 MultiDrive circuit is not reproduced; OTA corresponds conceptually to Pro 3 LP1, not all three of its filters.
+
+All branches run continuously; convex output weights crossfade with a 5 ms time constant at the oversampled rate. Retargeting mid-transition is supported. Original's reference audition remains byte-identical. Hard all-sound-off clears every filter state. Existing cutoff, envelope, velocity, resonance and aftertouch controls apply to all modes.
+
+Primary research: https://doepfer.de/a124.htm ; Moog Sub 37 User Manual v1.1; https://sequential.com/wp-content/uploads/2021/02/Pro-3-Users-Guide-1.2.pdf .
+
+
+### Wasp low-cutoff correction (0.6.1)
+
+The original nonlinear state updates were incorrect: applying the offset tanh transfer on every stored-state update produces spurious nonzero attractors as the frequency-dependent integration term gets small. Driven 60 Hz / resonance .5 reproduction at 192 kHz internally latched near (-.472,-.502) even after one second of zero input. The supplied recording's mean shifts from about -.02 to -.22 while AC RMS collapses from .11 to .002. This is DC lockup, not intentional resonance. Envelope sustain offsets effective cutoff, explaining the different panel cutoff threshold.
+
+Use the ordinary trapezoidal state-variable integrator memory updates with positive damping, retain asymmetric input/output coloration, and apply a local 5 Hz DC blocker after Wasp coloration. This prevents the attractor and removes normal distortion rectification without modifying Original, Ladder or OTA outputs. The prior description of coloration on Wasp integrator state is superseded. Tests check driven-then-silent recovery at 20/60/120/500 Hz, three resonance values, four internal sample rates, and bidirectional continuous-drive sweeps.

@@ -27,7 +27,7 @@ struct Hooks {
 };
 enum class Kind { Slider, Knob, Wave, Resonance, Target, Options, Noise, EnvDepth, Octave };
 struct Control { int id; Kind kind; float x,y,w,h; };
-inline const std::array<Control,36> controls {{
+inline const std::array<Control,37> controls {{
     {syn::Volume,Kind::Slider,105,108,0,260},
     {syn::Wave1,Kind::Wave,300,153,116,110},
     {syn::Reduce1,Kind::Slider,435,108,0,214}, {syn::Alt1,Kind::Slider,515,108,0,214}, {syn::Noise1,Kind::Slider,588,108,0,214},
@@ -47,6 +47,7 @@ inline const std::array<Control,36> controls {{
     {syn::NoiseEnv1,Kind::EnvDepth,588,373,60,48}, {syn::CrushEnv2,Kind::EnvDepth,1250,373,60,48},
     {syn::AltEnv2,Kind::EnvDepth,1326,373,60,48}, {syn::NoiseEnv2,Kind::EnvDepth,1400,373,60,48},
     {syn::Octave,Kind::Octave,300,350,78,78},
+    {syn::FilterAlgorithm,Kind::Resonance,364,548,78,78},
     {-1,Kind::Options,1563,862,50,50}, {syn::NoiseCutoff,Kind::Noise,1390,681,250,40}
 }};
 inline bool logarithmic(int id) { return id==syn::Attack || id==syn::Decay || id==syn::Release || id==syn::SquishRate1 || id==syn::SquishRate2 || id==syn::NoiseCutoff; }
@@ -279,10 +280,10 @@ public:
     bool create() {
         Gdiplus::GdiplusStartupInput input;if(Gdiplus::GdiplusStartup(&gdiplusToken,&input,nullptr)!=Gdiplus::Ok)return false;
         GetModuleHandleExW(GET_MODULE_HANDLE_EX_FLAG_FROM_ADDRESS|GET_MODULE_HANDLE_EX_FLAG_UNCHANGED_REFCOUNT,reinterpret_cast<LPCWSTR>(&wndProc),&instance);
-        className=L"Shiboleth.Editor."+std::to_wstring(reinterpret_cast<uintptr_t>(this));
+        className=L"Shibboleth.Editor."+std::to_wstring(reinterpret_cast<uintptr_t>(this));
         WNDCLASSW wc{};wc.style=CS_DBLCLKS;wc.lpfnWndProc=wndProc;wc.hInstance=instance;wc.hCursor=LoadCursor(nullptr,IDC_ARROW);wc.lpszClassName=className.c_str();
         if(!RegisterClassW(&wc))return false;
-        window=CreateWindowExW(0,className.c_str(),L"Shiboleth",WS_POPUP|WS_CLIPCHILDREN|WS_CLIPSIBLINGS,0,0,width,height,nullptr,nullptr,instance,this);
+        window=CreateWindowExW(0,className.c_str(),L"Shibboleth",WS_POPUP|WS_CLIPCHILDREN|WS_CLIPSIBLINGS,0,0,width,height,nullptr,nullptr,instance,this);
         return window!=nullptr;
     }
     bool parent(HWND p){if(!window||!IsWindow(p))return false;SetWindowLongPtrW(window,GWL_STYLE,WS_CHILD|WS_CLIPCHILDREN|WS_CLIPSIBLINGS);SetLastError(0);SetParent(window,p);if(GetLastError())return false;SetWindowPos(window,nullptr,0,0,width,height,SWP_NOZORDER|SWP_NOACTIVATE|SWP_FRAMECHANGED);return true;}

@@ -1,6 +1,6 @@
 # Original panel references
 
-Since version 0.5.0, Shiboleth renders its entire interface from vector paths and gradients in `src/vector_art.hpp`. These PNGs are retained as historical design references; none are embedded in or loaded by the plug-in. The original generation prompts are preserved below.
+Since version 0.5.0, Shibboleth renders its entire interface from vector paths and gradients in `src/vector_art.hpp`. These PNGs are retained as historical design references; none are embedded in or loaded by the plug-in. The original generation prompts are preserved below.
 
 # Panel artwork
 

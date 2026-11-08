@@ -31,12 +31,12 @@ struct Handler : IComponentHandler {
 };
 void pump(){MSG msg;while(PeekMessageW(&msg,nullptr,0,0,PM_REMOVE)){TranslateMessage(&msg);DispatchMessageW(&msg);}}
 int main(){try{
-    auto dll=LoadLibraryW(L"build/VST3/Shiboleth.vst3/Contents/x86_64-win/Shiboleth.vst3");check(dll,"Load self-contained VST3");
+    auto dll=LoadLibraryW(L"build/VST3/Shibboleth.vst3/Contents/x86_64-win/Shibboleth.vst3");check(dll,"Load self-contained VST3");
     auto init=reinterpret_cast<bool(*)()>(GetProcAddress(dll,"InitDll"));auto exit=reinterpret_cast<bool(*)()>(GetProcAddress(dll,"ExitDll"));
     auto getFactory=reinterpret_cast<IPluginFactory*(*)()>(GetProcAddress(dll,"GetPluginFactory"));check(init&&exit&&getFactory&&init(),"VST3 entry points");
     auto* factory=getFactory();check(factory && factory->countClasses()>=1,"VST3 discovery");PClassInfo info{};bool found=false;
     for(int i=0;i<factory->countClasses();++i){factory->getClassInfo(i,&info);if(!std::strcmp(info.category,kVstAudioEffectClass)){found=true;break;}}
-    check(found && !std::strcmp(info.name,"Shiboleth"),"Instrument class/name");
+    check(found && !std::strcmp(info.name,"Shibboleth"),"Instrument class/name");
     IComponent* component=nullptr;check(factory->createInstance(info.cid,IComponent::iid,reinterpret_cast<void**>(&component))==kResultOk,"Create component");
     HostApplication host;check(component->initialize(&host)==kResultOk,"Initialize");
     IAudioProcessor* processor=nullptr;IEditController* controller=nullptr;

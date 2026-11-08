@@ -29,8 +29,8 @@ void screenshot(HWND editor,const wchar_t* path,int width,int height){
 }
 int main(int argc,char** argv){
     try {
-        HMODULE dll=LoadLibraryW(L"build/Shiboleth.clap");require(dll!=nullptr,"Load plugin");
-        auto entry=reinterpret_cast<const clap_plugin_entry_t*>(GetProcAddress(dll,"clap_entry"));require(entry && entry->init("build/Shiboleth.clap"),"Entry init");
+        HMODULE dll=LoadLibraryW(L"build/Shibboleth.clap");require(dll!=nullptr,"Load plugin");
+        auto entry=reinterpret_cast<const clap_plugin_entry_t*>(GetProcAddress(dll,"clap_entry"));require(entry && entry->init("build/Shibboleth.clap"),"Entry init");
         auto factory=static_cast<const clap_plugin_factory_t*>(entry->get_factory(CLAP_PLUGIN_FACTORY_ID));
         clap_host_t host{CLAP_VERSION_INIT,nullptr,"Editor test host","Local","","1",extension,request,request,request};
         auto p=factory->create_plugin(factory,&host,factory->get_plugin_descriptor(factory,0)->id);require(p && p->init(p),"Create plugin");
@@ -52,7 +52,7 @@ int main(int argc,char** argv){
         require(!gui->set_scale(p,1.5),"First-open host DPI hint is declined for fixed-size panel");
         uint32_t width=0,height=0;require(gui->get_size(p,&width,&height),"Get editor size");
         require(width==1300 && height==765,"Initial editor dimensions");
-        HWND parent=CreateWindowExW(0,L"STATIC",L"Shiboleth — editor preview",WS_OVERLAPPEDWINDOW,100,100,int(width+32),int(height+60),nullptr,nullptr,GetModuleHandleW(nullptr),nullptr);
+        HWND parent=CreateWindowExW(0,L"STATIC",L"Shibboleth — editor preview",WS_OVERLAPPEDWINDOW,100,100,int(width+32),int(height+60),nullptr,nullptr,GetModuleHandleW(nullptr),nullptr);
         require(parent!=nullptr,"Create parent");clap_window_t window{};window.api=CLAP_WINDOW_API_WIN32;window.win32=parent;
         require(gui->set_parent(p,&window),"Embed editor");require(gui->show(p),"Show editor");
         HWND child=GetWindow(parent,GW_CHILD);require(child!=nullptr,"Editor child exists");
@@ -67,7 +67,7 @@ int main(int argc,char** argv){
         // Real Windows rapid-click sequence: DOWN, UP, DBLCLK, UP.
         // Every physical press must advance selectors, irrespective of timing.
         struct Selector {int id,x,y;};
-        for(auto selector:{Selector{syn::Resonance,364,751},Selector{syn::Octave,300,350},
+        for(auto selector:{Selector{syn::FilterAlgorithm,364,548},Selector{syn::Resonance,364,751},Selector{syn::Octave,300,350},
                 Selector{syn::Wave1,300,246},Selector{syn::Wave2,1115,246},Selector{syn::AftertouchTarget,1270,775},
                 Selector{syn::Wave1,300,153},Selector{syn::Wave2,1115,153},Selector{syn::AftertouchTarget,1441,774}}){
             const auto& def=syn::definitions[selector.id];int count=int(def.max-def.min+1);

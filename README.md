@@ -1,10 +1,10 @@
-# Shiboleth - version 0.5.3
+# Shibboleth - version 0.6.2
 
 A personal two-oscillator mono instrument for Windows x64 CLAP and VST3. Design details and research are in [DESIGN.md](DESIGN.md).
 
 ## Shareable VST3 + CLAP package
 
-`build/Shiboleth-0.5.3-Windows-x64.zip` contains both formats, installation instructions and third-party notices. The VST3 is self-contained: copy the entire `Shiboleth.vst3` folder into `C:/Program Files/Common Files/VST3/`, then rescan the DAW. No CLAP installation is needed. This package is Windows x64 only.
+`build/Shibboleth-0.6.2-Windows-x64.zip` contains both formats, installation instructions and third-party notices. The VST3 is self-contained: copy the entire `Shibboleth.vst3` folder into `C:/Program Files/Common Files/VST3/`, then rescan the DAW. No CLAP installation is needed. This package is Windows x64 only.
 
 VST3 and CLAP share the synth and native editor implementation. The VST3 uses the MIT-licensed [CLAP wrapper](https://github.com/free-audio/clap-wrapper), with its note events translated into the same engine. Modwheel, pitch bend, channel/poly pressure, automation, and state recall are supported. Host-specific CLAP modulation does not automatically transfer to VST3. Existing CLAP projects retain their identity and state format; a VST3 instance is a separate plug-in type.
 
@@ -14,7 +14,7 @@ VST3 verification: Steinberg validator **47 passed, 0 failed**; custom host test
 
 ## Try the build
 
-`build/Shiboleth.clap` is a self-contained binary with the native vector graphical editor. Close instances before replacing the previous file in your plug-in location, then rescan/reopen. If upgrading from `MonoStudy.clap`, replace that file rather than keeping both names: the internal plug-in ID is unchanged. Host remote pages are Tone, Oscillator 1, Oscillator 2, and Performance. Local DSP and CLAP host tests pass; verification of this revision in Bitwig is pending.
+`build/Shibboleth.clap` is a self-contained binary with the native vector graphical editor. Close instances before replacing the previous file in your plug-in location, then rescan/reopen. If upgrading from `MonoStudy.clap`, replace that file rather than keeping both names: the internal plug-in ID is unchanged. Host remote pages are Tone, Oscillator 1, Oscillator 2, and Performance. Local DSP and CLAP host tests pass; verification of this revision in Bitwig is pending.
 
 ## Editor
 
@@ -87,3 +87,16 @@ Version 0.3.2 tests verify phase/source continuity through legato, last-note fal
 The interface recreates the prior layout, midnight-blue panel, recessed tracks, ivory markings and beveled controls using GDI+ vector drawing. It retains the fixed panel size, live scopes, symbol-drag modulation and all interactions. Knob lighting remains fixed while pointers rotate continuously. Synth behavior, parameter IDs and saved-state formats are unchanged. Imperius is unaffected.
 
 Version 0.5.3 stabilizes scope cycle boundaries: completed cycles of actual processed oscillator samples are displayed, with an explicit closing edge instead of interpolation across the wrap discontinuity. Scope capture does not alter audio. Rapid-click regression coverage includes waveform displays and both aftertouch selector hit areas; these controls always cycle on double-click messages, never reset.
+
+
+Version 0.6.0 adds the circular **ALG** selector above-right of Cutoff. Empty pips = Original; one = Wasp; two = Ladder; three = OTA. Hover for the algorithm name. The existing RES button and aftertouch resonance route work in every mode. `FILTER: Algorithm` is automatable and saved with the patch; older patches select Original automatically.
+
+The new modes are character models inspired by Wasp's two-pole inverter distortion, a compensated four-pole ladder, and a four-pole OTA filter, respectively. They are not measured emulations of Wasp, Sub 37, or Pro 3 circuitry. The Sub 37's separate MultiDrive circuit and the Pro 3's other two filter choices are not reproduced. Original retains the prior DSP, verified with an identical rendered WAV hash. Modes run continuously and crossfade with a 5 ms time constant (about 23 ms to 99%) when selected.
+
+`build/filter-algorithms.wav` plays the same three-note phrase in Original, Wasp, Ladder, then OTA, four seconds per mode. Settings and output gain are identical, not loudness-normalized. New regression checks cover response slopes, distinct output, algorithm switching, internal stability, state migration, and rapid ALG clicks.
+
+
+Version 0.6.1 fixes the Wasp low-cutoff DC latch. Asymmetric coloration now operates on the audio input/output, not recursively on integrator memory. A Wasp-only 5 Hz DC blocker removes rectification offset before the shared output chain. The Wasp timbre changes somewhat with this correction; other algorithms and parameter/state formats are unchanged. Regression tests drive low cutoffs, check return to silence, and sweep down/up at multiple resonance settings and sample rates.
+
+
+Version 0.6.2 corrects the instrument's name to **Shibboleth**, including plug-in display names and package filenames. Replace the old `Shiboleth.clap` file / `Shiboleth.vst3` bundle with the new spelling instead of installing both. CLAP ID, VST3 class ID, parameters, saved state and DSP are unchanged. Internal build targets and dependency filenames retain their historical spelling.

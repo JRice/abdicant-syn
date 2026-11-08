@@ -1,4 +1,4 @@
-SHIBOLETH 0.5.3 - WINDOWS x64
+SHIBBOLETH 0.6.2 - WINDOWS x64
 
 This package contains the same synth in VST3 and CLAP formats.
 No separate CLAP installation is needed for the VST3 version.
@@ -6,18 +6,23 @@ This build does not run on macOS, Linux, or 32-bit Windows hosts.
 
 VST3 INSTALLATION
 1. Extract the ZIP.
-2. Copy the ENTIRE Shiboleth.vst3 folder to:
+2. Copy the ENTIRE Shibboleth.vst3 folder to:
    C:\Program Files\Common Files\VST3\
    Windows may request administrator permission for that folder.
    If your DAW supports a custom VST3 search folder, that also works.
-3. Rescan plug-ins or restart your DAW, then add Shiboleth as an instrument.
+3. Rescan plug-ins or restart your DAW, then add Shibboleth as an instrument.
 Do not pull the inner binary out of the .vst3 folder.
 
 CLAP INSTALLATION (optional, for a CLAP-capable DAW)
-Copy Shiboleth.clap to your existing CLAP plug-in folder and rescan.
+Copy Shibboleth.clap to your existing CLAP plug-in folder and rescan.
 Close existing instances before replacing an older build.
 VST3 and CLAP are separate plug-in types; replacing an existing CLAP
 instance with VST3 does not automatically transfer its DAW state.
+
+UPGRADING FROM THE OLD SPELLING
+Remove the old Shiboleth.clap file / Shiboleth.vst3 bundle from your
+plug-in folder when installing Shibboleth. Do not keep both spellings.
+Internal plug-in IDs and saved-state compatibility are unchanged.
 
 QUICK CONTROLS
 Drag knobs and sliders vertically. Shift gives fine control; double-click
