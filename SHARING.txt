@@ -1,0 +1,41 @@
+SHIBOLETH 0.4.0 - WINDOWS x64
+
+This package contains the same synth in VST3 and CLAP formats.
+No separate CLAP installation is needed for the VST3 version.
+This build does not run on macOS, Linux, or 32-bit Windows hosts.
+
+VST3 INSTALLATION
+1. Extract the ZIP.
+2. Copy the ENTIRE Shiboleth.vst3 folder to:
+   C:\Program Files\Common Files\VST3\
+   Windows may request administrator permission for that folder.
+   If your DAW supports a custom VST3 search folder, that also works.
+3. Rescan plug-ins or restart your DAW, then add Shiboleth as an instrument.
+Do not pull the inner binary out of the .vst3 folder.
+
+CLAP INSTALLATION (optional, for a CLAP-capable DAW)
+Copy Shiboleth.clap to your existing CLAP plug-in folder and rescan.
+Close existing instances before replacing an older build.
+VST3 and CLAP are separate plug-in types; replacing an existing CLAP
+instance with VST3 does not automatically transfer its DAW state.
+
+QUICK CONTROLS
+Drag knobs and sliders vertically. Shift gives fine control; double-click
+resets a control. Click waveform displays or their small round buttons to
+change waveforms. Right-click a waveform for a menu.
+Drag the symbols below Crush, Alt and Noise AM for bipolar envelope depth.
+The three-pip button below Osc I selects -2, -1, 0, +1 octaves for both
+oscillators (two lit pips = original pitch). Resonance has four positions.
+Port at zero retriggers envelopes on every note; above zero uses legato.
+Modwheel controls vibrato; pitch bend is +/-2 semitones. Aftertouch target
+and depth are at the lower right. Options holds shared noise bandwidth.
+Save sounds using your DAW's plug-in state/preset facilities.
+
+VALIDATION
+Built and tested on Windows x64. Steinberg VST3 validator: 47 tests pass.
+Custom host tests cover sound parity, MIDI expression, note timing,
+automation/state and repeated editor reopening. Compatibility with every
+DAW has not been independently tested.
+
+Third-party notices are in licenses/. VST is a trademark of Steinberg
+Media Technologies GmbH. No Steinberg endorsement is implied.

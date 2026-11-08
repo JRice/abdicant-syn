@@ -1,0 +1,19 @@
+diff --git a/src/wrapasvst3.cpp b/src/wrapasvst3.cpp
+index 6a00130..2c5581f 100644
+--- a/src/wrapasvst3.cpp
++++ b/src/wrapasvst3.cpp
+@@ -441,6 +441,14 @@ uint32 PLUGIN_API ClapAsVst3::getTailSamples()
+ 
+ tresult PLUGIN_API ClapAsVst3::setupProcessing(Vst::ProcessSetup &newSetup)
+ {
++#ifdef SHIBOLETH_SAMPLE_RATE_LIMITS
++  // Reject unsupported configurations before committing them. The synth's
++  // activate() enforces the same range; retaining the last valid setup lets
++  // hosts probe formats safely without breaking subsequent activation.
++  if (!(newSetup.sampleRate >= 8000 && newSetup.sampleRate <= 384000) ||
++      newSetup.maxSamplesPerBlock <= 0)
++    return kInvalidArgument;
++#endif
+   // [main-thread] -- must not run while the Linux helper thread is inside this
+   // plug-in's idle. \see _mainThreadLock
+   std::lock_guard<std::recursive_mutex> mainThreadGuard(_mainThreadLock);

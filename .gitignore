@@ -1,0 +1,17 @@
+# Generated builds (including nested instruments and local build tools)
+build/
+cmake-build-*/
+
+# Downloaded SDKs/libraries; retain our rebuild metadata and compatibility patch.
+/third_party/*
+!/third_party/SHIBOLETH-DEPENDENCIES.md
+!/third_party/ADDITIONAL-NOTICES.txt
+!/third_party/shiboleth-wrapper.patch
+
+# Local editor and OS files
+.vs/
+.vscode/
+__pycache__/
+*.pyc
+.DS_Store
+Thumbs.db

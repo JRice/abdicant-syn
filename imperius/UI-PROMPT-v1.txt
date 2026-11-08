@@ -1,0 +1,21 @@
+Use case: ui-mockup.
+Create one polished, high-fidelity, straight-on UI concept for IMPERIUS, an original five-voice wavefolding software synthesizer. The provided image is a MATERIAL AND DESIGN LANGUAGE REFERENCE ONLY, not an edit target. Make a new usable software-instrument panel inspired by its warm silver metal, tidy black silkscreen grouping, silver-center black knobs and amber indicator arcs. Do not copy its brand, logo, precise panel layout or unused functions.
+
+Composition: wide landscape panel approximately 1500 x 900 proportions, shown perfectly front-on with zero perspective, entirely in frame with a very small charcoal surround. Narrow warm walnut cheeks at the two sides, warm satin aluminum faceplate with barely perceptible grain, rounded black printed group outlines, small black tab section headers with white condensed uppercase lettering. Excellent legibility and generous control spacing at desktop scale. This is a product UI screenshot, not a photograph on a desk. No cables, jacks or keyboard. Soft fixed upper-left lighting gives knobs real tactile depth; polished silver centers with brushed radial finish, ribbed black skirts, thin ivory pointer marks. Restrained soft amber semicircular value arcs on the four main knobs. Fine engraved tick marks on smaller knobs. No neon, no sci-fi screens, no blue glow, no fake wear or excessive screws. The overall look should be elegant, purposeful and slightly vintage, close to the supplied reference's visual feel.
+
+Header: IMPERIUS in distinctive thin spaced black uppercase, modest rather than oversized, upper left. Small subtitle FIVE VOICE WAVEFOLDING SYNTHESIZER. A small three-position OCTAVE switch marked -1 / 0 / +1 in the header, plus ONE small VOLUME knob at upper right. No second output knob.
+
+Precise functional layout, exactly the following 36 user controls, no invented extras:
+Upper main area occupies around 55% of height and is split into three adjacent framed groups.
+1. COMPLEX GENERATOR: widest group, about 52% of inner width. Top row THREE LARGE knobs labeled SHAPE, HARMONICS, FOLD, equal diameter around 100 px. Above SHAPE show small square, sine, saw wave symbols from left through noon to right, making sine center obvious. Under these large controls, six SMALL knobs in two neat aligned rows of three. Row 1 labels PHASE MOD, AUDIO MOD, BIAS. Row 2 labels HARM EG, FOLD EG, FOLD MOD. AUDIO MOD means basic-generator modulation of harmonics, FOLD MOD means basic-generator modulation of fold amount. Keep labels short, clear and exactly printed. Controls have ample spacing; don't cram the large knobs together.
+2. BASIC / MIXER: middle group about 22% width. Upper subrow a three-position WAVE selector marked SQUARE / SINE / SAW and a small TUNE knob. Lower area three small mixer knobs labeled COMPLEX, BASIC, SUB, arranged neatly within the group. A small printed summing arrow can lead toward the filter but no patch cable or connector.
+3. FILTER: right group about 26% width. ONE LARGE CUTOFF knob with amber arc, beneath it two small knobs RESONANCE and EG AMOUNT, plus a small two-position LP / HP switch. A tiny printed 12 dB/OCT legend. There is exactly ONE cutoff knob, and exactly two filter amount knobs.
+
+Lower area: four framed groups, all aligned in one tidy row under the main groups.
+LFO 1 and LFO 2 are the left two, each about 18% of panel width, with small RATE, SHAPE and AMOUNT knobs and exactly ONE amber-lit SYNC pushbutton per LFO. Small routing captions HARMONICS below LFO 1 and FOLD below LFO 2. No tempo display or beat-division buttons.
+MOD ENVELOPE and AMP ENVELOPE are the right two, each about 32% width. Each has exactly four small knobs in a horizontal row labeled ATTACK, DECAY, SUSTAIN, RELEASE. NO velocity knob, no drone or loop buttons because those aren't implemented.
+Keep lower groups vertically aligned and balanced with generous silver breathing room.
+
+All text must be clean and correctly spelled, use understated condensed sans-serif technical labels. The only product name is IMPERIUS.
+Exclude: arp, sequencer, presets, patch browser, menu bar, effects, delay, headphones, clock input, tap tempo, MIDI indicators, patch cables, patch sockets, meters, scope screens, performance keyboard, extra LEDs, decorative nonfunctional controls.
+Deliver one resolved, cohesive mockup, not a collage or alternatives.
