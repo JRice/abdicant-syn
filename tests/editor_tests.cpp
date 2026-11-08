@@ -5,7 +5,7 @@
 #include <gdiplus.h>
 #include <clap/clap.h>
 #include "../src/synth.hpp"
-#include "../src/knob_frames.hpp"
+#include "../src/vector_art.hpp"
 #include <iostream>
 #include <vector>
 #include <stdexcept>
@@ -38,14 +38,17 @@ int main(int argc,char** argv){
         auto params=static_cast<const clap_plugin_params_t*>(p->get_extension(p,CLAP_EXT_PARAMS));
         require(gui && gui->is_api_supported(p,CLAP_WINDOW_API_WIN32,false),"Win32 embedded editor advertised");
         require(!gui->is_api_supported(p,CLAP_WINDOW_API_WIN32,true),"Do not advertise floating windows");
-        require(gui->create(p,CLAP_WINDOW_API_WIN32,false),"Create editor and load embedded artwork");
-        {ui::KnobFrames frames;
-         for(int style=0;style<3;++style){auto* low=frames.get(style,0);auto* high=frames.get(style,1);auto* mid=frames.get(style,.5);
-          int size=int(low->GetWidth());Gdiplus::Color a,b,c;
-          low->GetPixel(size/3,size/3,&a);high->GetPixel(size/3,size/3,&b);mid->GetPixel(size/3,size/3,&c);
-          require(a.GetValue()==b.GetValue() && b.GetValue()==c.GetValue(),"Fixed lighting across knob frames");
-          mid->GetPixel(size/2,size/5,&a);low->GetPixel(size/2,size/5,&b);
-          require(a.GetValue()!=b.GetValue(),"Indicator changes between knob frames");}}
+        require(gui->create(p,CLAP_WINDOW_API_WIN32,false),"Create vector editor");
+        // Render vector knobs at two device scales: lighting must stay fixed
+        // across rotation, while the pointer moves. No sprite assets involved.
+        for(int size:{112,256})for(int style=0;style<3;++style){
+            Gdiplus::Bitmap low(size,size,PixelFormat32bppARGB),mid(size,size,PixelFormat32bppARGB),high(size,size,PixelFormat32bppARGB);
+            auto draw=[&](Gdiplus::Bitmap& image,double value){Gdiplus::Graphics g(&image);g.SetSmoothingMode(Gdiplus::SmoothingModeAntiAlias);ui::art::knob(g,size*.5f,size*.5f,float(size),float(size),style,value);};
+            draw(low,0);draw(mid,.5);draw(high,1);Gdiplus::Color a,b,c;
+            low.GetPixel(size/3,size/3,&a);mid.GetPixel(size/3,size/3,&b);high.GetPixel(size/3,size/3,&c);
+            require(a.GetValue()==b.GetValue() && b.GetValue()==c.GetValue(),"Vector knob lighting is fixed across rotation and scale");
+            mid.GetPixel(size/2,size/5,&a);low.GetPixel(size/2,size/5,&b);require(a.GetValue()!=b.GetValue(),"Vector pointer rotates");
+        }
         uint32_t width=0,height=0;require(gui->get_size(p,&width,&height),"Get editor size");
         require(width==1300 && height==765,"Initial editor dimensions");
         HWND parent=CreateWindowExW(0,L"STATIC",L"Shiboleth — editor preview",WS_OVERLAPPEDWINDOW,100,100,int(width+32),int(height+60),nullptr,nullptr,GetModuleHandleW(nullptr),nullptr);
@@ -100,6 +103,7 @@ int main(int argc,char** argv){
         uint32_t otherW=820,otherH=482;require(!gui->adjust_size(p,&otherW,&otherH),"No interactive resizing");
         require(!gui->set_size(p,820,482),"Reject different fixed panel dimensions");require(gui->set_size(p,width,height),"Accept fixed dimensions");
         require(gui->set_scale(p,1.25),"Support host DPI scale");uint32_t scaledW,scaledH;gui->get_size(p,&scaledW,&scaledH);require(scaledW==1625 && scaledH==956,"DPI scale dimensions");
+        screenshot(child,L"build/editor-vector-hidpi.png",int(scaledW),int(scaledH));
         require(gui->set_scale(p,1),"Restore scale");
         require(gui->hide(p) && gui->show(p),"Hide/show lifecycle");
         if(argc>1 && std::strcmp(argv[1],"--show")==0){ShowWindow(parent,SW_SHOW);MSG message;for(int i=0;i<600 && IsWindow(parent);++i){while(PeekMessageW(&message,nullptr,0,0,PM_REMOVE)){TranslateMessage(&message);DispatchMessageW(&message);}p->process(p,&block);Sleep(33);}}

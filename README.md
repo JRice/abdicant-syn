@@ -1,10 +1,10 @@
-# Shiboleth - version 0.4.0
+# Shiboleth - version 0.5.0
 
 A personal two-oscillator mono instrument for Windows x64 CLAP and VST3. Design details and research are in [DESIGN.md](DESIGN.md).
 
 ## Shareable VST3 + CLAP package
 
-`build/Shiboleth-0.4.0-Windows-x64.zip` contains both formats, installation instructions and third-party notices. The VST3 is self-contained: copy the entire `Shiboleth.vst3` folder into `C:/Program Files/Common Files/VST3/`, then rescan the DAW. No CLAP installation is needed. This package is Windows x64 only.
+`build/Shiboleth-0.5.0-Windows-x64.zip` contains both formats, installation instructions and third-party notices. The VST3 is self-contained: copy the entire `Shiboleth.vst3` folder into `C:/Program Files/Common Files/VST3/`, then rescan the DAW. No CLAP installation is needed. This package is Windows x64 only.
 
 VST3 and CLAP share the synth and native editor implementation. The VST3 uses the MIT-licensed [CLAP wrapper](https://github.com/free-audio/clap-wrapper), with its note events translated into the same engine. Modwheel, pitch bend, channel/poly pressure, automation, and state recall are supported. Host-specific CLAP modulation does not automatically transfer to VST3. Existing CLAP projects retain their identity and state format; a VST3 instance is a separate plug-in type.
 
@@ -14,11 +14,11 @@ VST3 verification: Steinberg validator **47 passed, 0 failed**; custom host test
 
 ## Try the build
 
-`build/Shiboleth.clap` is a self-contained binary with the native graphical editor and embedded artwork. Close instances before replacing the previous file in your plug-in location, then rescan/reopen. If upgrading from `MonoStudy.clap`, replace that file rather than keeping both names: the internal plug-in ID is unchanged. Host remote pages are Tone, Oscillator 1, Oscillator 2, and Performance. Local DSP and CLAP host tests pass; verification of this revision in Bitwig is pending.
+`build/Shiboleth.clap` is a self-contained binary with the native vector graphical editor. Close instances before replacing the previous file in your plug-in location, then rescan/reopen. If upgrading from `MonoStudy.clap`, replace that file rather than keeping both names: the internal plug-in ID is unchanged. Host remote pages are Tone, Oscillator 1, Oscillator 2, and Performance. Local DSP and CLAP host tests pass; verification of this revision in Bitwig is pending.
 
 ## Editor
 
-The approved midnight-blue layout has moving sliders, fixed-light knob frames, live scopes, a small aftertouch post, circular resonance and octave buttons, and a lower-right Options button.
+The approved midnight-blue layout has moving sliders, fixed-light vector knobs, live scopes, a small aftertouch post, circular resonance and octave buttons, and a lower-right Options button.
 
 - Drag sliders vertically; click their tracks to move directly. Drag knobs vertically.
 - Drag a Crush, Alt or Noise AM symbol upward/downward to set its bipolar filter-envelope amount. A white 2-pixel track line shows the range from the base value, clipped at the travel limits. Double-click the symbol to clear its amount. All six amounts are independent, automatable and saved with the patch.
@@ -33,7 +33,7 @@ The approved midnight-blue layout has moving sliders, fixed-light knob frames, l
 - Fixed size: 1300 x 765 pixels, with host DPI scaling support. Interactive resizing is disabled.
 - Both waveform windows show pitch-synchronized oscillator traces after Crush/Alt/Noise AM/Squish, before oscillator-2 level and the shared filter/amplifier. They update when the host processes audio and freeze when processing stops.
 
-GUI edits emit CLAP begin/value/end automation gestures. Host automation and recalled state update the same parameter storage. Scope transfer uses atomic snapshots; the audio thread never accesses graphics or windows. Artwork provenance is in [assets/README.md](assets/README.md).
+GUI edits emit CLAP begin/value/end automation gestures. Host automation and recalled state update the same parameter storage. Scope transfer uses atomic snapshots; the audio thread never accesses graphics or windows. The vector artwork lives in `src/vector_art.hpp`: paths, gradients, text and sparse vector stippling recreate the original panel. The static background is cached at the actual host pixel size; moving controls are drawn directly at that scale. There are no source bitmaps or knob sprites in the plug-in. Original PNGs remain as design references. Artwork provenance is in [assets/README.md](assets/README.md).
 
 ## Implemented sound and performance
 
@@ -65,7 +65,7 @@ GUI edits emit CLAP begin/value/end automation gestures. Host automation and rec
 
 ## Build and verification
 
-Run `./build.ps1` in PowerShell. Default compiler: `C:/msys64/ucrt64/bin/g++.exe`; override with `-Compiler`. The adjacent `windres.exe` embeds the faceplate. GDI+, GDI, User32 and Ole32 provide the editor; no web runtime is needed. The script builds the plug-in and both test executables, runs them, renders `build/first-study.wav`, and captures editor screenshots. No global installation or system settings are changed.
+Run `./build.ps1` in PowerShell. Default compiler: `C:/msys64/ucrt64/bin/g++.exe`; override with `-Compiler`. The adjacent `windres.exe` embeds Windows version metadata. All panel artwork is drawn using vector paths and gradients. GDI+, GDI, User32 and Ole32 provide the editor; no web runtime is needed. The script builds the plug-in and both test executables, runs them, renders `build/first-study.wav`, and captures editor screenshots. No global installation or system settings are changed.
 
 Official CLAP headers are vendored in `third_party/clap` at commit `a47f6badb49d948fd009998f28309cdab78979c9` (MIT; retain LICENSE). To fetch them in a fresh checkout:
 
@@ -81,3 +81,7 @@ The 0.3.1 crash fix replaces GDI+'s cached generic font family with a locally ow
 `build/first-study.wav` is an eight-second generated DSP preview, not a matched Dreadbox reference or a finished sound-design demo.
 
 Version 0.3.2 tests verify phase/source continuity through legato, last-note fallback and detached retriggers; velocity transition timing at 44.1/48/96 kHz; hidden-pulse continuity when Crush is bypassed; and a rendered-audio velocity-step regression. State format and parameter IDs are unchanged.
+
+## Vector interface revision (0.5.0)
+
+The interface recreates the prior layout, midnight-blue panel, recessed tracks, ivory markings and beveled controls using GDI+ vector drawing. It retains the fixed panel size, live scopes, symbol-drag modulation and all interactions. Knob lighting remains fixed while pointers rotate continuously. Synth behavior, parameter IDs and saved-state formats are unchanged. Imperius is unaffected.

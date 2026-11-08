@@ -12,7 +12,7 @@
 #include <string>
 #include <vector>
 #include "synth.hpp"
-#include "knob_frames.hpp"
+#include "vector_art.hpp"
 
 namespace ui {
 inline constexpr uint32_t preferredWidth=1300,preferredHeight=765;
@@ -62,8 +62,7 @@ class Editor {
     Hooks hooks;
     HWND window{}; HINSTANCE instance{}; std::wstring className;
     ULONG_PTR gdiplusToken{};
-    std::unique_ptr<Gdiplus::Bitmap> faceplate,background;
-    std::unique_ptr<KnobFrames> knobFrames;
+    std::unique_ptr<Gdiplus::Bitmap> background;
     uint32_t width=preferredWidth,height=preferredHeight;
     int hover=-1,drag=-1,focus=-1;
     float lastX=0,lastY=0; double dragValue=0;
@@ -71,23 +70,6 @@ class Editor {
     syn::Values observed=syn::defaults();
     static constexpr float designWidth=1635,designHeight=962;
 
-    static std::unique_ptr<Gdiplus::Bitmap> resource(HINSTANCE module,int id) {
-        HRSRC r=FindResourceW(module,MAKEINTRESOURCEW(id),MAKEINTRESOURCEW(10)); if(!r) return {};
-        HGLOBAL loaded=LoadResource(module,r); DWORD length=SizeofResource(module,r);
-        void* bytes=LockResource(loaded); if(!bytes || !length) return {};
-        HGLOBAL memory=GlobalAlloc(GMEM_MOVEABLE,length); if(!memory) return {};
-        void* dest=GlobalLock(memory); if(!dest) { GlobalFree(memory); return {}; }
-        std::memcpy(dest,bytes,length); GlobalUnlock(memory);
-        IStream* stream=nullptr;
-        if(CreateStreamOnHGlobal(memory,TRUE,&stream)!=S_OK) { GlobalFree(memory); return {}; }
-        auto decoded=std::unique_ptr<Gdiplus::Bitmap>(Gdiplus::Bitmap::FromStream(stream));
-        std::unique_ptr<Gdiplus::Bitmap> result;
-        if(decoded && decoded->GetLastStatus()==Gdiplus::Ok) {
-            result=std::make_unique<Gdiplus::Bitmap>(decoded->GetWidth(),decoded->GetHeight(),PixelFormat32bppPARGB);
-            Gdiplus::Graphics copy(result.get()); copy.DrawImage(decoded.get(),0,0);
-        }
-        decoded.reset(); stream->Release(); return result;
-    }
     static std::wstring wide(const char* text) {
         int n=MultiByteToWideChar(CP_UTF8,0,text,-1,nullptr,0); if(n<1) return L"";
         std::wstring out(size_t(n),L'\0'); MultiByteToWideChar(CP_UTF8,0,text,-1,out.data(),n); out.pop_back(); return out;
@@ -108,11 +90,7 @@ class Editor {
         path.AddArc(x+w-d,y+h-d,d,d,0,90);path.AddArc(x,y+h-d,d,d,90,90);path.CloseFigure();g.FillPath(&brush,&path);
     }
     void drawKnob(Gdiplus::Graphics& g,const Control& c,double position) {
-        using namespace Gdiplus;
-        SolidBrush shadow(Color(80,0,0,0));g.FillEllipse(&shadow,c.x-c.w/2-2,c.y-c.h/2+6,c.w+5,c.h+5);
-        const int style=c.id==syn::Cutoff?0:c.id==syn::AftertouchDepth?2:1;
-        auto* frame=knobFrames->get(style,position);
-        g.DrawImage(frame,RectF(c.x-c.w/2,c.y-c.h/2,c.w,c.h),0,0,float(frame->GetWidth()),float(frame->GetHeight()),UnitPixel);
+        art::knob(g,c.x,c.y,c.w,c.h,c.id==syn::Cutoff?0:c.id==syn::AftertouchDepth?2:1,position);
     }
 
     void drawSlider(Gdiplus::Graphics& g,const Control& c,double position) {
@@ -141,10 +119,10 @@ class Editor {
     }
     void paint(HDC dc) {
         using namespace Gdiplus;
-        if(!faceplate || !knobFrames || !width || !height) return;
+        if(!width || !height) return;
         if(!background || background->GetWidth()!=width || background->GetHeight()!=height) {
             background=std::make_unique<Bitmap>(width,height,PixelFormat32bppPARGB);Graphics bg(background.get());
-            bg.SetInterpolationMode(InterpolationModeHighQualityBicubic);bg.DrawImage(faceplate.get(),Rect(0,0,int(width),int(height)));
+            bg.ScaleTransform(width/designWidth,height/designHeight);art::panel(bg);
         }
         Bitmap buffer(width,height,PixelFormat32bppPARGB);Graphics g(&buffer);g.DrawImage(background.get(),0,0);
         g.ScaleTransform(width/designWidth,height/designHeight);g.SetSmoothingMode(SmoothingModeAntiAlias);g.SetInterpolationMode(InterpolationModeHighQualityBicubic);g.SetTextRenderingHint(TextRenderingHintAntiAliasGridFit);
@@ -153,11 +131,7 @@ class Editor {
             if(c.kind==Kind::Knob)drawKnob(g,c,normalized(c.id,v));
             if(c.kind==Kind::Slider)drawSlider(g,c,normalized(c.id,v));
             if(c.kind==Kind::Resonance || c.kind==Kind::Octave) {
-                if(c.kind==Kind::Octave){
-                    SolidBrush shadow(Color(95,0,0,0));g.FillEllipse(&shadow,c.x-40,c.y-35,83.f,83.f);
-                    LinearGradientBrush button(PointF(c.x-30,c.y-39),PointF(c.x+30,c.y+39),Color(255,55,59,64),Color(255,17,20,25));
-                    g.FillEllipse(&button,c.x-39,c.y-39,78.f,78.f);Pen rim(Color(255,8,10,15),4);g.DrawEllipse(&rim,c.x-39,c.y-39,78.f,78.f);
-                }
+                art::button(g,c.x,c.y,78);
                 int n=int(v)+(c.kind==Kind::Octave?2:0);const PointF pips[]={PointF(c.x,c.y-15),PointF(c.x-14,c.y+8),PointF(c.x+14,c.y+8)};
                 for(int j=0;j<3;++j){Pen edge(Color(255,231,222,202),2);SolidBrush fill(j<n?Color(255,236,225,202):Color(255,28,31,36));g.FillEllipse(&fill,pips[j].X-7,pips[j].Y-7,14.f,14.f);g.DrawEllipse(&edge,pips[j].X-7,pips[j].Y-7,14.f,14.f);}
             }
@@ -290,11 +264,10 @@ class Editor {
     }
 public:
     explicit Editor(Hooks h):hooks(h) {}
-    ~Editor(){if(window){stopDrag();KillTimer(window,1);DestroyWindow(window);}if(!className.empty())UnregisterClassW(className.c_str(),instance);background.reset();faceplate.reset();knobFrames.reset();if(gdiplusToken)Gdiplus::GdiplusShutdown(gdiplusToken);}
+    ~Editor(){if(window){stopDrag();KillTimer(window,1);DestroyWindow(window);}if(!className.empty())UnregisterClassW(className.c_str(),instance);background.reset();if(gdiplusToken)Gdiplus::GdiplusShutdown(gdiplusToken);}
     bool create() {
         Gdiplus::GdiplusStartupInput input;if(Gdiplus::GdiplusStartup(&gdiplusToken,&input,nullptr)!=Gdiplus::Ok)return false;
         GetModuleHandleExW(GET_MODULE_HANDLE_EX_FLAG_FROM_ADDRESS|GET_MODULE_HANDLE_EX_FLAG_UNCHANGED_REFCOUNT,reinterpret_cast<LPCWSTR>(&wndProc),&instance);
-        faceplate=resource(instance,101);knobFrames=std::make_unique<KnobFrames>();if(!faceplate)return false;
         className=L"Shiboleth.Editor."+std::to_wstring(reinterpret_cast<uintptr_t>(this));
         WNDCLASSW wc{};wc.style=CS_DBLCLKS;wc.lpfnWndProc=wndProc;wc.hInstance=instance;wc.hCursor=LoadCursor(nullptr,IDC_ARROW);wc.lpszClassName=className.c_str();
         if(!RegisterClassW(&wc))return false;

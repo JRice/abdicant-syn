@@ -1,4 +1,4 @@
-SHIBOLETH 0.4.0 - WINDOWS x64
+SHIBOLETH 0.5.0 - WINDOWS x64
 
 This package contains the same synth in VST3 and CLAP formats.
 No separate CLAP installation is needed for the VST3 version.

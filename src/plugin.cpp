@@ -10,7 +10,7 @@
 namespace {
 constexpr clap_id firstId=1000;
 const char* features[]={CLAP_PLUGIN_FEATURE_INSTRUMENT,CLAP_PLUGIN_FEATURE_SYNTHESIZER,CLAP_PLUGIN_FEATURE_STEREO,nullptr};
-const clap_plugin_descriptor_t descriptor={CLAP_VERSION_INIT,"local.abdicant.mono.prototype","Shiboleth","Personal instruments","","","","0.4.0","Two oscillator mono synthesizer",features};
+const clap_plugin_descriptor_t descriptor={CLAP_VERSION_INIT,"local.abdicant.mono.prototype","Shiboleth","Personal instruments","","","","0.5.0","Two oscillator mono synthesizer",features};
 struct Plugin {
     clap_plugin_t api{};
     const clap_host_t* host;

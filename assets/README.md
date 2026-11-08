@@ -1,10 +1,14 @@
+# Original panel references
+
+Since version 0.5.0, Shiboleth renders its entire interface from vector paths and gradients in `src/vector_art.hpp`. These PNGs are retained as historical design references; none are embedded in or loaded by the plug-in. The original generation prompts are preserved below.
+
 # Panel artwork
 
-Generated with the built-in imagegen tool, based on the user's sketch and approved realistic concept. The images are embedded in the Windows CLAP binary; nothing is loaded from the user's Codex directory at runtime.
+Generated with the built-in imagegen tool, based on the user's sketch and approved realistic concept. These were embedded in earlier builds.
 
-- `approved-panel.png`: the approved visual reference; retained as a visual reference. Knobs are now separately rendered by `src/knob_frames.hpp` with a fixed light source.
+- `approved-panel.png`: the approved visual reference; retained as a visual reference. Its knob materials informed the new vector rendering.
 - `faceplate.png`: first clean-background iteration, retained as source material.
-- `faceplate-v2.png`: final embedded background, incorporating circular Resonance and lower-right circular Options.
+- `faceplate-v2.png`: final raster background reference, incorporating circular Resonance and lower-right circular Options.
 
 The application draws slider caps, fixed-light knob frames, envelope range lines, scope traces, resonance pips, target text, hover readouts and Options over this background. `build/editor.png` is a capture from the actual native editor.
 
