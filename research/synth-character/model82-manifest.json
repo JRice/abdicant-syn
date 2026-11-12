@@ -1,0 +1,17 @@
+[
+  {
+    "path": "C:\\Program Files\\Common Files\\VST3\\Model 82 Sequencing Mono Synth.vst3\\Contents\\x86_64-win\\Model 82 Sequencing Mono Synth.vst3",
+    "bytes": 11337000,
+    "sha256": "38b1182daf83e3edff7cd64c88362eb681b571e9c4c2f10e91253ba599ef2572"
+  },
+  {
+    "path": "C:\\Program Files\\Common Files\\Softube\\SSX\\Model 82 Sequencing Mono Synth.ssx\\Contents\\x86_64-win\\Model 82 Sequencing Mono Synth.ssx",
+    "bytes": 88705840,
+    "sha256": "326c25e5ef3cb6e86e1fb1c2f8e23aa47ea40485e2ff3be1e87ab62de3c49fb0"
+  },
+  {
+    "path": "C:\\Program Files\\Common Files\\Softube\\SSX\\Model 82 VCF.ssx\\Contents\\x86_64-win\\Model 82 VCF.ssx",
+    "bytes": 34350384,
+    "sha256": "dd85d859c0e7c5d1a20eab9b762307b216b822048a46525e57f821946e6370d2"
+  }
+]

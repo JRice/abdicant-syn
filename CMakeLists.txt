@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.25)
-project(Shibboleth VERSION 0.6.2 LANGUAGES C CXX RC)
+project(Shibboleth VERSION 0.9.0 LANGUAGES C CXX RC)
 set(CMAKE_CXX_STANDARD 20)
 set(CLAP_SDK_ROOT "${CMAKE_CURRENT_SOURCE_DIR}/third_party/clap" CACHE PATH "")
 set(VST3_SDK_ROOT "${CMAKE_CURRENT_SOURCE_DIR}/third_party/vst3sdk" CACHE PATH "")
@@ -14,7 +14,7 @@ target_link_libraries(shiboleth_impl INTERFACE gdiplus ole32 gdi32 user32)
 set(TCLP_RESOURCE_DIRECTORY "")
 make_clapfirst_plugins(TARGET_NAME shiboleth IMPL_TARGET shiboleth_impl
     OUTPUT_NAME Shibboleth ENTRY_SOURCE "${CMAKE_CURRENT_SOURCE_DIR}/src/plugin.cpp"
-    BUNDLE_VERSION 0.6.2 BUNDLE_IDENTIFIER local.abdicant.shiboleth
+    BUNDLE_VERSION 0.9.0 BUNDLE_IDENTIFIER local.abdicant.shiboleth
     COPY_AFTER_BUILD FALSE WINDOWS_FOLDER_VST3 TRUE PLUGIN_FORMATS CLAP VST3
     ASSET_OUTPUT_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/build")
 target_sources(shiboleth_vst3 PRIVATE src/resources.rc)

@@ -1,0 +1,15 @@
+{
+  "path": "C:\\Program Files\\Common Files\\VST3\\GForce\\OB-X.vst3\\Contents\\x86_64-win\\OB-X.vst3",
+  "bytes": 10572288,
+  "sha256": "34caf97e30f9f1d2c2c7902dfbe7be5ba7852ab0bab69b3aa51b8b527ab759cb",
+  "version": "1.0",
+  "inspection": "Static; no execution or audio rendering",
+  "evidence": {
+    "filter_sample": "0x180157e40",
+    "oscillator_sample": "0x1801a5ca0",
+    "oscillator_sync_sample": "0x1801a6160",
+    "vintage_apply": "0x1803a7170",
+    "voice_constructor": "0x1803ab810",
+    "vintage_identifier_initializer": "0x18000f640"
+  }
+}

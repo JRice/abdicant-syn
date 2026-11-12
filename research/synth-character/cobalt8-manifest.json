@@ -1,0 +1,38 @@
+[
+  {
+    "path": "G:/My Drive/xfer/Cobalt8VST.vst3/Contents/MacOS/Cobalt8VST",
+    "workspace_copy": "C:\\Users\\JRice\\code\\abdicant-syn\\installer-inspection\\Library\\Audio\\Plug-Ins\\VST3\\Cobalt8VST.vst3\\Contents\\MacOS\\Cobalt8VST",
+    "bytes": 23118304,
+    "sha256": "6cd1587d07ca944bd8731aabb2a26a7015af60e70712b6c3969b0181af5293bd",
+    "version": "0.4.9",
+    "architectures": [
+      "x86_64",
+      "arm64"
+    ],
+    "supplied_and_workspace_hashes_matched": true
+  },
+  {
+    "path": "G:/My Drive/xfer/Cobalt8_master_2-1.syx",
+    "bytes": 546945,
+    "sha256": "2725ff1d8c4a0b837419ee50bcf32d3a020e5a8feb233add3936a9ad063744ec",
+    "decoded_bytes": 419200,
+    "decoded_sha256": "916b66a848e74231465d85e16077d330ef28dc26decfa1f68a8be8ebaa88115f",
+    "firmware_load_address": "0x410000"
+  },
+  {
+    "path": "G:/My Drive/xfer/Cobalt8_slave_2-1.syx",
+    "bytes": 383118,
+    "sha256": "5d6f89edd481aa0ea0b6ab947f4fc778583eb4db4e424733272950be8d46a58a",
+    "decoded_bytes": 293632,
+    "decoded_sha256": "cebc71da42281624cdaeab2efb7a2eb1e05ca4f6349b48a0da8582ac5676b915",
+    "firmware_load_address": "0x410000"
+  },
+  {
+    "path": "G:/My Drive/xfer/Cobalt8_panel_2-1.syx",
+    "bytes": 320159,
+    "sha256": "09704a432236876b4e188bab43602fd3d57242b2a91f95b8f36d6aaf9303b6fc",
+    "decoded_bytes": 245376,
+    "decoded_sha256": "2bf96abfc7114188416900ede3102a58eae56385d034258c68919a68040bce7a",
+    "firmware_load_address": "0x410000"
+  }
+]

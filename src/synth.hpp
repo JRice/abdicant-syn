@@ -90,10 +90,20 @@ struct Envelope {
     }
 };
 
+// Internal rendering profiles for the existing Saw and Pulse selections.
+inline constexpr int osc2Saw=7, osc2Pulse=8;
+inline constexpr double osc2Duty=.485;
 inline double wave(double p,int shape) {
     p-=std::floor(p);
     const auto tri=[](double x){ return 1-4*std::abs(x-0.5); };
     switch(shape) {
+    case osc2Saw: {
+        constexpr std::array<double,5> ramp{-1.,-.41,.12,.59,1.};
+        const double position=4*p;
+        const int segment=int(position);
+        return ramp[segment]+(position-segment)*(ramp[segment+1]-ramp[segment]);
+    }
+    case osc2Pulse: return p<osc2Duty?1:-1;
     case 0: return tri(p);
     case 1: return 2*p-1;
     case 2: return p<0.5?1:-1;
@@ -103,6 +113,74 @@ inline double wave(double p,int shape) {
     default: { double x=1.6*tri(p)+0.25; return x>1?2-x:x< -1?-2-x:x; }
     }
 }
+// Piecewise-linear waveform edge data: value jumps and derivative jumps.
+// Convolution with a unit-area triangular kernel yields compact polynomial
+// BLEP/BLAMP corrections. Edges are positioned fractionally, including Alt's
+// partial final cycle and Squish's tail. No additional audio delay is required.
+struct WaveEdge { double phase,jump,slope; };
+struct WaveEdges { std::array<WaveEdge,6> edge; int count; double startSlope; };
+inline constexpr std::array<WaveEdges,9> waveEdges{{
+    {{{{0,0,8},{.5,0,-8}}},2,4},
+    {{{{0,-2,0}}},1,2},
+    {{{{0,2,0},{.5,-2,0}}},2,0},
+    {{{{0,0,4},{.25,0,-8},{.5,0,4}}},3,4},
+    {{{{0,2,8},{.25,-2,0},{.5,0,8},{.75,0,-16}}},4,0},
+    {{{{(1-1/1.7)/4,0,6.8},{(1+1/1.7)/4,0,-6.8},
+        {(3-1/1.7)/4,0,-6.8},{(3+1/1.7)/4,0,6.8}}},4,0},
+    {{{{0,0,-12.8},{.0546875,0,12.8},{.3671875,0,-12.8},
+        {.5,0,12.8},{.6328125,0,-12.8},{.9453125,0,12.8}}},6,-6.4},
+    {{{{0,-2,.72},{.25,0,-.24},{.5,0,-.24},{.75,0,-.24}}},4,2.36},
+    {{{{0,2,0},{osc2Duty,-2,0}}},2,0}
+}};
+inline double edgeCorrection(double distance,double dt,double jump,double slope) {
+    if(distance>.5)distance-=1;else if(distance<-.5)distance+=1;
+    const double t=1-std::abs(distance)/dt;
+    if(t<=0)return 0;
+    return jump*(distance<0?.5:-.5)*t*t+slope*dt*t*t*t/6;
+}
+inline double analogueWave(double phase,double dt,double width,double cycles,int shape) {
+    const double tail=(shape==1 || shape==3 || shape==osc2Saw)?0.:-1.;
+    double result=phase<width?wave(phase/width*cycles,shape):tail;
+    if(dt<=0)return result;
+    const auto& table=waveEdges[shape];const double scale=cycles/width;
+    const double end=std::nextafter(cycles,0.),endPhase=end-std::floor(end);
+    double endSlope=table.startSlope;
+    for(int j=0;j<table.count;++j)if(table.edge[j].phase>0 && table.edge[j].phase<=endPhase)endSlope+=table.edge[j].slope;
+    const double endValue=wave(end,shape);
+    const bool gap=width<1;
+    result+=edgeCorrection(phase,dt,wave(0,shape)-(gap?tail:endValue),
+                           scale*(table.startSlope-(gap?0:endSlope)));
+    if(gap)result+=edgeCorrection(phase-width,dt,tail-endValue,-endSlope*scale);
+    // Only visit slave cycles intersecting the correction window. Adjacent
+    // master periods supply edges close to the wrap, without duplicating them.
+    for(int image=-1;image<=1;++image) {
+        const double lo=(phase+image-dt)*scale,hi=(phase+image+dt)*scale;
+        const int first=std::max(0,int(std::floor(lo)));
+        const int last=std::min(int(std::ceil(cycles))-1,int(std::floor(hi)));
+        for(int cycle=first;cycle<=last;++cycle)for(int j=0;j<table.count;++j) {
+            const auto& e=table.edge[j];const double position=cycle+e.phase;
+            if(position>0 && position<cycles && position>=lo && position<=hi)
+                result+=edgeCorrection(phase-position/scale,dt,e.jump,e.slope*scale);
+        }
+    }
+    return result;
+}
+struct MemoryDrive {
+    double fast=0,slow=0;
+    static double bend(double x,double drive,double bias) {
+        const double b=std::tanh(bias);
+        return (std::tanh(drive*x+bias)-b)/(drive*(1-b*b));
+    }
+    double next(double input,double fs) {
+        fast+=(input-fast)*(1-std::exp(-2*pi*4000/fs));
+        slow+=(input-slow)*(1-std::exp(-2*pi*120/fs));
+        // Complementary histories sum to the input at small signal levels.
+        // Distinct nonlinear laws make transient and sustained responses differ.
+        const double high=input-fast,mid=fast-slow,low=slow;
+        return .6*bend(.8*input,1,.08)+.4*(bend(.8*high,.9,.05)
+            +bend(.8*mid,1.25,-.08)+bend(.8*low,1.5,.12));
+    }
+};
 struct Oscillator {
     double phase=0.137, hiddenPhase=0.137, lfo=0, noise=0, drift=0, driftTarget=0;
     int driftCountdown=0;
@@ -115,19 +193,20 @@ struct Oscillator {
         lfo+=p[offset+4]/fs; lfo-=std::floor(lfo);
         const double width=1-0.92*p[offset+5]*(0.5+0.5*std::sin(2*pi*lfo));
         const int shape=int(p[offset]);
-        // Saw and half-triangle retain a zero tail; the other shapes rest at -1.
-        const double tail=(shape==1 || shape==3)?0.0:-1.0;
-        // Phase warping implements an internal slave reset at each master period.
-        double value=phase<width?wave(phase/width*(1+15*p[offset+2]),shape):tail;
+        const double cycles=1+15*p[offset+2];
         const double amount=p[offset+1];
-        // The hidden pulse oscillator keeps its phase even when its mix is zero.
-        if(int(p[offset])==2) {
-            const double hidden=hiddenPhase<width?wave(hiddenPhase/width*(1+15*p[offset+2]),2):tail;
-            // Blend in the equal-weight pair close to zero to avoid an abrupt switch.
-            const double blend=0.5*std::min(1.0,amount/0.03);
-            value=value*(1-blend)+hidden*blend;
-        } else value=crush(value,amount);
-        hiddenPhase+=frequency*std::exp2(amount/12)/fs; hiddenPhase-=std::floor(hiddenPhase);
+        const double hiddenStep=frequency*std::exp2(amount/12)/fs;
+        int profile=shape;
+        if(offset==Wave2 && shape==1)profile=osc2Saw;
+        if(offset==Wave2 && shape==2)profile=osc2Pulse;
+        double value=analogueWave(phase,frequency/fs,width,cycles,profile);
+        if(shape==2) {
+            const double blend=.5*std::min(1.,amount/.03);
+            if(blend>0) value+=(analogueWave(hiddenPhase,hiddenStep,width,cycles,profile)-value)*blend;
+        } else {
+            value=crush(value,amount);
+        }
+        hiddenPhase+=hiddenStep; hiddenPhase-=std::floor(hiddenPhase);
         const double noiseAlpha=1-std::exp(-2*pi*p[NoiseCutoff]/fs);
         noise+=(random()-noise)*noiseAlpha;
         // Maintain modulation strength as bandwidth/sample rate change. Double
@@ -142,7 +221,7 @@ struct Oscillator {
 };
 
 // Windowed-sinc decimator: synthesis and nonlinear processing run at 4x.
-// This reduces aliasing but hard-sync/squish still need dedicated edge correction.
+// Oscillator edge correction runs before the nonlinear voice and decimation.
 struct Decimator {
     static constexpr int taps=97;
     std::array<double,taps> weights{}, history{}; int cursor=0;
@@ -190,9 +269,19 @@ struct CharacterFilters {
         // Unequal positive/negative headroom; exactly zero at zero input.
         return (std::tanh(1.7*x+0.18)-std::tanh(0.18))/1.646;
     }
+    // A bounded loss driven by the resonant signal itself. The squared control
+    // concentrates the effect at the upper RES settings. Referencing stage
+    // differences in the cascades keeps steady bass from driving the loss.
+    static double resonantLoad(double band,double knee) {
+        const double power=band*band;
+        return power/(power+knee*knee);
+    }
     static double fourPole(double input,double g,double resonance,
                            std::array<double,4>& state,bool isOta) {
-        const double G=g/(1+g), feedback=(isOta?4.05:4.15)*resonance;
+        const double G=g/(1+g);
+        const double load=resonantLoad(state[1]-state[3],isOta?.28:.18);
+        const double compression=(isOta?.20:.48)*resonance*load;
+        const double feedback=(isOta?4.05:4.15)*resonance*(1-compression);
         const double drive=isOta?1.45:1.8;
         // Solve current-sample global feedback, including stage saturation.
         // Monotone transfer gives a positive Newton denominator at every step.
@@ -220,7 +309,8 @@ struct CharacterFilters {
     double wasp(double input,double g,double res,double dcPole) {
         // Apply asymmetric coloration to audio, never to stored integrator state:
         // repeatedly biasing the state creates spurious DC attractors at low cutoff.
-        const double k=2-1.82*res,a=1/(1+g*(g+k));
+        const double loss=.95*res*res*resonantLoad(wasp1,.22);
+        const double k=2-1.82*res+loss,a=1/(1+g*(g+k));
         const double v1=a*(wasp1+g*(inverter(input*1.2)-wasp2));
         const double v2=wasp2+g*v1;
         wasp1=2*v1-wasp1;
@@ -259,6 +349,7 @@ struct Engine {
     bool captureScopes=false;
     Decimator decimator;
     CharacterFilters filters;
+    MemoryDrive memoryDrive;
     double ic1=0,ic2=0,dcInput=0,dcOutput=0,limiterGain=1;
     Engine() { osc2.rng=0x12bd871f; osc2.phase=osc2.hiddenPhase=0.43; }
     void reset(double rate) { *this=Engine(); sampleRate=rate; }
@@ -298,7 +389,7 @@ struct Engine {
     }
     void allOff(bool immediate) {
         noteCount=0; filterEnvelope.off(); ampEnvelope.off();
-        if(immediate) { filterEnvelope={}; ampEnvelope={}; ic1=ic2=0; filters={}; decimator.history.fill(0); dcInput=dcOutput=0; }
+        if(immediate) { filterEnvelope={}; ampEnvelope={}; ic1=ic2=0; filters={}; memoryDrive={}; decimator.history.fill(0); dcInput=dcOutput=0; }
     }
     double next() {
         double smoothing=1-std::exp(-1/(0.004*sampleRate));
@@ -336,10 +427,12 @@ struct Engine {
             double source1=osc1.next(freq1,fs,modulated,Wave1),source2=osc2.next(freq2,fs,modulated,Wave2);
             if(captureScopes){scopes[0].push(phase1,source1);scopes[1].push(phase2,source2);}
             double x=source1+effective[Level2]*source2;
-            x=std::tanh(x*0.8);
+            x=memoryDrive.next(x,fs);
             double dc=x-dcInput+std::exp(-2*pi*5/fs)*dcOutput; dcInput=x; dcOutput=dc;
             double cutoff=std::clamp(25*std::exp2(effective[Cutoff]*9+smooth[FilterAmount]*7*fe*sensitivity),20.0,std::min(20000.0,sampleRate*0.44));
-            double g=std::tan(pi*cutoff/fs), k=2-1.97*(0.08+0.92*resonantValue);
+            const double g=std::tan(pi*cutoff/fs);
+            const double loss=.35*resonantValue*resonantValue*CharacterFilters::resonantLoad(ic1,.22);
+            const double k=2-1.97*(0.08+0.92*resonantValue)+loss;
             double a1=1/(1+g*(g+k));
             double v1=a1*(ic1+g*(dc-ic2)), v2=ic2+g*v1;
             ic1=4*std::tanh((2*v1-ic1)/4); ic2=4*std::tanh((2*v2-ic2)/4);

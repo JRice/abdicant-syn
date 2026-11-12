@@ -1,10 +1,10 @@
-# Shibboleth - version 0.6.2
+# Shibboleth - version 0.9.0
 
 A personal two-oscillator mono instrument for Windows x64 CLAP and VST3. Design details and research are in [DESIGN.md](DESIGN.md).
 
 ## Shareable VST3 + CLAP package
 
-`build/Shibboleth-0.6.2-Windows-x64.zip` contains both formats, installation instructions and third-party notices. The VST3 is self-contained: copy the entire `Shibboleth.vst3` folder into `C:/Program Files/Common Files/VST3/`, then rescan the DAW. No CLAP installation is needed. This package is Windows x64 only.
+`build/Shibboleth-0.9.0-Windows-x64.zip` contains both formats, installation instructions and third-party notices. The VST3 is self-contained: copy the entire `Shibboleth.vst3` folder into `C:/Program Files/Common Files/VST3/`, then rescan the DAW. No CLAP installation is needed. This package is Windows x64 only.
 
 VST3 and CLAP share the synth and native editor implementation. The VST3 uses the MIT-licensed [CLAP wrapper](https://github.com/free-audio/clap-wrapper), with its note events translated into the same engine. Modwheel, pitch bend, channel/poly pressure, automation, and state recall are supported. Host-specific CLAP modulation does not automatically transfer to VST3. Existing CLAP projects retain their identity and state format; a VST3 instance is a separate plug-in type.
 
@@ -100,3 +100,12 @@ Version 0.6.1 fixes the Wasp low-cutoff DC latch. Asymmetric coloration now oper
 
 
 Version 0.6.2 corrects the instrument's name to **Shibboleth**, including plug-in display names and package filenames. Replace the old `Shiboleth.clap` file / `Shiboleth.vst3` bundle with the new spelling instead of installing both. CLAP ID, VST3 class ID, parameters, saved state and DSP are unchanged. Internal build targets and dependency filenames retain their historical spelling.
+
+
+## Filter response in 0.8.0
+
+Antialiased oscillators and the mixer with memory now run on every patch. The former Character selector is retired. Both 0.7.0 selections migrate to the permanent sound. Existing patches can sound different.
+
+RES responds to the signal building inside each filter. At the upper pip settings, Original gradually damps its resonant band, Wasp damps it more strongly, Ladder reduces feedback as the signal between its stages grows, and OTA retains more feedback under the same conditions. Hold a saw bass with three RES pips, sweep cutoff through its harmonics and raise Osc II level to hear the response.
+
+In 0.9.0 Osc II has a gently bowed saw ramp and a 48.5% pulse duty cycle. Its hidden detuned pulse shares that duty cycle. The waveform differences are fixed across notes and sessions.

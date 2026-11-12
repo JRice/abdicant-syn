@@ -10,7 +10,7 @@
 namespace {
 constexpr clap_id firstId=1000;
 const char* features[]={CLAP_PLUGIN_FEATURE_INSTRUMENT,CLAP_PLUGIN_FEATURE_SYNTHESIZER,CLAP_PLUGIN_FEATURE_STEREO,nullptr};
-const clap_plugin_descriptor_t descriptor={CLAP_VERSION_INIT,"local.abdicant.mono.prototype","Shibboleth","Personal instruments","","","","0.6.2","Two oscillator mono synthesizer",features};
+const clap_plugin_descriptor_t descriptor={CLAP_VERSION_INIT,"local.abdicant.mono.prototype","Shibboleth","Personal instruments","","","","0.9.0","Two oscillator mono synthesizer",features};
 struct Plugin {
     clap_plugin_t api{};
     const clap_host_t* host;
@@ -209,7 +209,7 @@ bool readAll(const clap_istream_t* s,void* data,uint64_t size) {
 }
 bool CLAP_ABI save(const clap_plugin_t* p,const clap_ostream_t* stream) {
     syn::Values values{}; for(int i=0;i<syn::Count;++i) values[i]=self(p).base[i].load();
-    return writeAll(stream,"ASYN0005",8) && writeAll(stream,values.data(),sizeof values);
+    return writeAll(stream,"ASYN0007",8) && writeAll(stream,values.data(),sizeof values);
 }
 bool CLAP_ABI load(const clap_plugin_t* p,const clap_istream_t* stream) {
     char magic[8]; syn::Values values=syn::defaults();
@@ -218,9 +218,17 @@ bool CLAP_ABI load(const clap_plugin_t* p,const clap_istream_t* stream) {
     const bool version2=std::memcmp(magic,"ASYN0002",8)==0;
     const bool version3=std::memcmp(magic,"ASYN0003",8)==0;
     const bool version4=std::memcmp(magic,"ASYN0004",8)==0;
-    if(!legacy && !version2 && !version3 && !version4 && std::memcmp(magic,"ASYN0005",8)) return false;
+    const bool version5=std::memcmp(magic,"ASYN0005",8)==0;
+    const bool version6=std::memcmp(magic,"ASYN0006",8)==0;
+    if(!legacy && !version2 && !version3 && !version4 && !version5 && !version6 && std::memcmp(magic,"ASYN0007",8)) return false;
     const size_t bytes=legacy?sizeof(double)*syn::NoiseCutoff:version2?sizeof(double)*syn::CrushEnv1:version3?sizeof(double)*syn::Octave:version4?sizeof(double)*syn::FilterAlgorithm:sizeof values;
     if(!readAll(stream,values.data(),bytes)) return false;
+    // v6 appended the retired Character selector after the surviving values.
+    if(version6) {
+        double retiredCharacter;
+        if(!readAll(stream,&retiredCharacter,sizeof retiredCharacter) ||
+           !(retiredCharacter==0 || retiredCharacter==1)) return false;
+    }
     for(int i=0;i<syn::Count;++i) if(!std::isfinite(values[i]) || values[i]<syn::definitions[i].min || values[i]>syn::definitions[i].max) return false;
     for(int i=0;i<syn::Count;++i) self(p).base[i].store(syn::validValue(i,values[i]));
     auto h=static_cast<const clap_host_params_t*>(self(p).host->get_extension(self(p).host,CLAP_EXT_PARAMS));

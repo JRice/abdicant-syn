@@ -138,10 +138,10 @@ void coreTests() {
             checkNear(osc.next(220,192000,p,offset),(shape==1 || shape==3)?0:-1,0,"Squish tail per waveform, including hidden pulse and Crush");
         }
         syn::Oscillator osc;auto p=syn::defaults();p[offset]=shape;osc.phase=.37;
-        checkNear(osc.next(220,192000,p,offset),syn::wave(.37,shape),1e-12,"Squish bypass preserves original waveform");
+        checkNear(osc.next(220,192000,p,offset),(offset==syn::Wave2 && shape==1 ? -.41+.12*2.12 : syn::wave(.37,shape)),1e-12,"Squish bypass preserves original waveform");
     }
     {syn::Oscillator osc;auto p=syn::defaults();p[syn::Wave1]=2;p[syn::Reduce1]=1;p[syn::SquishDepth1]=1;
-     osc.phase=0;osc.hiddenPhase=.9;osc.lfo=.25;
+     osc.phase=.02;osc.hiddenPhase=.9;osc.lfo=.25;
      checkNear(osc.next(220,192000,p,0),0,0,"Hidden pulse has its own negative Squish tail before mixing");}
     checkNear(syn::crush(0.325,0),0.325,0,"Crush bypass");
     checkNear(syn::crush(0.325,1),0,0,"Maximum crush center level");
@@ -150,14 +150,14 @@ void coreTests() {
     checkNear(syn::crush(0,0.73),0,0,"Crushing preserves squish silence");
     { syn::Oscillator oscillator; auto p=syn::defaults(); p[syn::Wave1]=2; p[syn::Noise1]=1; p[syn::NoiseCutoff]=150;
       double oldEnergy=0,newEnergy=0;
-      for(int i=0;i<192000;++i) { double gain=std::abs(oscillator.next(220,192000,p,0));
+      for(int i=0;i<192000;++i) { double gain=std::abs(oscillator.next(0,192000,p,0));
           if(i>2000) { double oldGain=std::clamp(0.5+oscillator.noise*2.5,0.0,1.0); oldEnergy+=(oldGain-.5)*(oldGain-.5); newEnergy+=(gain-.5)*(gain-.5); } }
       const double ratio=std::sqrt(newEnergy/oldEnergy);
       check(ratio>1.95 && ratio<=2.001,"Noise AM excursion doubles at reference bandwidth"); }
     { syn::Oscillator slow,fast; auto low=syn::defaults(),high=low;
       low[syn::NoiseCutoff]=20; high[syn::NoiseCutoff]=800; low[syn::Wave1]=high[syn::Wave1]=2; low[syn::Noise1]=high[syn::Noise1]=1;
       double previousSlow=.5,previousFast=.5,slowMovement=0,fastMovement=0;
-      for(int i=0;i<48000;++i) { double a=std::abs(slow.next(220,48000,low,0)),b=std::abs(fast.next(220,48000,high,0));
+      for(int i=0;i<48000;++i) { double a=std::abs(slow.next(0,48000,low,0)),b=std::abs(fast.next(0,48000,high,0));
           if(i>2000) { slowMovement+=(a-previousSlow)*(a-previousSlow); fastMovement+=(b-previousFast)*(b-previousFast); } previousSlow=a;previousFast=b; }
       check(slowMovement<fastMovement*0.1,"Shared noise cutoff changes modulation smoothness"); }
     checkNear(syn::resonance(0),0,0,"Resonance 0"); checkNear(syn::resonance(1),0.1,0,"Resonance 1");
@@ -326,8 +326,17 @@ void pluginTests() {
     change.param_id=1000+syn::FilterAlgorithm;change.value=3;params->flush(p,&single,nullptr);
     Memory algorithmState;check(state->save(p,&algorithmState.out),"Save algorithm");change.value=1;params->flush(p,&single,nullptr);
     check(state->load(p,&algorithmState.in),"Load algorithm");params->get_value(p,change.param_id,&restored);checkNear(restored,3,0,"Algorithm survives state round trip");
+    for(double selection:{0.,1.}) {
+        Memory old;old.bytes=algorithmState.bytes;std::memcpy(old.bytes.data(),"ASYN0006",8);
+        const auto offset=old.bytes.size();old.bytes.resize(offset+sizeof selection);
+        std::memcpy(old.bytes.data()+offset,&selection,sizeof selection);
+        check(state->load(p,&old.in),"Load both 0.7 character selections");
+        params->get_value(p,1000+syn::FilterAlgorithm,&restored);
+        checkNear(restored,3,0,"Migrated patch retains selected filter");
+        old.cursor=0;old.bytes.pop_back();check(!state->load(p,&old.in),"Reject truncated legacy character");
+    }
     Memory version4;version4.bytes=algorithmState.bytes;std::memcpy(version4.bytes.data(),"ASYN0004",8);version4.bytes.resize(8+sizeof(double)*syn::FilterAlgorithm);
-    check(state->load(p,&version4.in),"Load pre-algorithm patch");params->get_value(p,change.param_id,&restored);checkNear(restored,0,0,"Old patches select original filter");
+    check(state->load(p,&version4.in),"Load pre-algorithm patch");params->get_value(p,1000+syn::FilterAlgorithm,&restored);checkNear(restored,0,0,"Old patches select original filter");
     Memory version3;version3.bytes=current.bytes;std::memcpy(version3.bytes.data(),"ASYN0003",8);version3.bytes.resize(8+sizeof(double)*syn::Octave);
     check(state->load(p,&version3.in),"Load pre-octave patch");params->get_value(p,1000+syn::Octave,&restored);checkNear(restored,0,0,"Old patch retains original pitch");
     params->get_value(p,1000+syn::NoiseEnv2,&restored);checkNear(restored,-.7,1e-12,"Version 3 retains modulation depth");

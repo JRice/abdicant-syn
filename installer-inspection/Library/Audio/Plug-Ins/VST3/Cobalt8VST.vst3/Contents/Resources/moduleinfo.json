@@ -1,0 +1,48 @@
+{
+  "Name": "Cobalt8VST",
+  "Version": "0.4.9",
+  "Factory Info": {
+    "Vendor": "Cobalt8VST",
+    "URL": "",
+    "E-Mail": "",
+    "Flags": {
+      "Unicode": true,
+      "Classes Discardable": false,
+      "Component Non Discardable": false,
+    },
+  },
+  "Classes": [
+    {
+      "CID": "ABCDEF019182FAEB433876734362386D",
+      "Category": "Audio Module Class",
+      "Name": "Cobalt8VST",
+      "Vendor": "Cobalt8VST",
+      "Version": "0.4.9",
+      "SDKVersion": "VST 3.7.12",
+      "Sub Categories": [
+        "Instrument",
+        "Synth",
+      ],
+      "Class Flags": 2,
+      "Cardinality": 2147483647,
+      "Snapshots": [
+      ],
+    },
+    {
+      "CID": "ABCDEF011234ABCD433876734362386D",
+      "Category": "Component Controller Class",
+      "Name": "Cobalt8VST",
+      "Vendor": "Cobalt8VST",
+      "Version": "0.4.9",
+      "SDKVersion": "VST 3.7.12",
+      "Sub Categories": [
+        "Instrument",
+        "Synth",
+      ],
+      "Class Flags": 2,
+      "Cardinality": 2147483647,
+      "Snapshots": [
+      ],
+    },
+  ],
+}

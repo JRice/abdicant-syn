@@ -1,0 +1,17 @@
+[
+  {
+    "path": "C:\\Program Files\\Common Files\\Softube\\SSX\\Model 84 Polyphonic Synthesizer.ssx\\Contents\\x86_64-win\\Model 84 Polyphonic Synthesizer.ssx",
+    "bytes": 80547624,
+    "sha256": "6d992baf345f1fc76e3e601eca7bacd8fb620c65c0d66a12064a77fa6feeeb7b"
+  },
+  {
+    "path": "C:\\Program Files\\Common Files\\Softube\\SSX\\Model 84 Filter.ssx\\Contents\\x86_64-win\\Model 84 Filter.ssx",
+    "bytes": 33636152,
+    "sha256": "9eeec6aef046fb4fba6b6d13ae9bec8aba8ed01d4541262ecfe938711897fa47"
+  },
+  {
+    "path": "C:\\Program Files\\Common Files\\Softube\\SSX\\Model 84 Oscillator.ssx\\Contents\\x86_64-win\\Model 84 Oscillator.ssx",
+    "bytes": 33793848,
+    "sha256": "29aaea4d88da352a9df9fb9cbcd0fc823df7c6fe10836b9f3fa4d3e367228ace"
+  }
+]

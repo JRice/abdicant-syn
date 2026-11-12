@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="utf-8"?>
+<pkg-info overwrite-permissions="true" relocatable="false" identifier="local.cobalt8vst.pkg" postinstall-action="none" version="0.4.9" format-version="2" generator-version="InstallCmds-860.14 (24G419)" install-location="/" auth="root">
+    <payload numberOfFiles="69" installKBytes="69675"/>
+    <bundle path="./Library/Audio/Plug-Ins/VST3/Cobalt8VST.vst3" id="local.cobalt8vst.plugin" CFBundleShortVersionString="0.4.9" CFBundleVersion="0.4.9"/>
+    <bundle path="./Library/Audio/Plug-Ins/Components/Cobalt8VST.component" id="local.cobalt8vst.plugin" CFBundleShortVersionString="0.4.9" CFBundleVersion="0.4.9"/>
+    <bundle path="./Applications/Cobalt8VST.app" id="local.cobalt8vst.plugin" CFBundleShortVersionString="0.4.9" CFBundleVersion="0.4.9"/>
+    <bundle-version>
+        <bundle id="local.cobalt8vst.plugin"/>
+        <bundle id="local.cobalt8vst.plugin"/>
+        <bundle id="local.cobalt8vst.plugin"/>
+    </bundle-version>
+    <upgrade-bundle>
+        <bundle id="local.cobalt8vst.plugin"/>
+        <bundle id="local.cobalt8vst.plugin"/>
+        <bundle id="local.cobalt8vst.plugin"/>
+    </upgrade-bundle>
+    <update-bundle/>
+    <atomic-update-bundle/>
+    <strict-identifier>
+        <bundle id="local.cobalt8vst.plugin"/>
+    </strict-identifier>
+    <relocate/>
+</pkg-info>

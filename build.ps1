@@ -19,6 +19,10 @@ try {
     if ($LASTEXITCODE -ne 0) { throw 'Test compilation failed.' }
     & '.\build\tests.exe'
     if ($LASTEXITCODE -ne 0) { throw 'Verification failed.' }
+    & $Compiler @compilerFlags 'tests/character_tests.cpp' '-o' 'build/character_tests.exe'
+    if ($LASTEXITCODE -ne 0) { throw 'Character test compilation failed.' }
+    & '.\build\character_tests.exe'
+    if ($LASTEXITCODE -ne 0) { throw 'Character verification failed.' }
     & $Compiler @compilerFlags 'tests/editor_tests.cpp' '-lgdiplus' '-lole32' '-lgdi32' '-luser32' '-o' 'build/editor_tests.exe'
     if ($LASTEXITCODE -ne 0) { throw 'Editor test compilation failed.' }
     & '.\build\editor_tests.exe'

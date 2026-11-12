@@ -1,0 +1,41 @@
+index_zero_based,panel_name,slave_thumb_function_address,oscillator_state_count
+0,VA Sweep,0x416b44,2
+1,VA Crushed,0x420248,1
+2,Spread Saw,0x418ac0,4
+3,Spread Sqr,0x419314,4
+4,Spread Tri,0x419f50,4
+5,PWM,0x418200,2
+6,PWM Dual,0x41e9a0,2
+7,PWM Tri Sqr,0x428e14,1
+8,PWM Saw Erase,0x41f660,1
+9,PWM Tri Pinch,0x4280ec,1
+10,H-Sync Saw,0x41c498,2
+11,H-Sync Sqr,0x41cce4,2
+12,H-Sync Tri,0x41da10,2
+13,Fractal Saw,0x425fac,1
+14,Fractal Sqr,0x42708c,1
+15,Fractal Tri,0x42d0f0,1
+16,Reverse Saw,0x42c35c,1
+17,Reverse Sqr,0x42b480,2
+18,Reverse Tri,0x429e44,1
+19,Wind Amp Sync,0x420c10,1
+20,Metal Saw,0x42e208,3
+21,Metal Sqr,0x42ec48,3
+22,Metal Tri,0x42fdc0,3
+23,RM Saw,0x4319e8,2
+24,RM Sqr,0x4253d4,2
+25,RM Tri,0x423348,2
+26,RM Tri Sqr,0x432408,2
+27,RM Saw Sqr,0x433c5c,2
+28,RM Saw Tri,0x434990,2
+29,FM Saw Squ,0x4388f0,2
+30,FM Squ Squ,0x437978,2
+31,FM Tri Squ,0x436480,2
+32,Noise AM Saw,0x41ac8c,1
+33,Noise AM Squ,0x41b1ec,1
+34,Noise AM Tri,0x41b820,1
+35,Chaos Saw,0x435ca0,2
+36,Chaos Sqr,0x4226c0,2
+37,Chaos Tri,0x421c8c,2
+38,Fold Tri,0x41be90,1
+39,Filt Noise,0x43161c,1

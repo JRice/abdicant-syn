@@ -32,6 +32,6 @@ try {
     Copy-Item -LiteralPath 'third_party/clap-wrapper/LICENSE' -Destination "$release/licenses/CLAP-wrapper.txt" -Force
     Copy-Item -LiteralPath 'third_party/vst3sdk/LICENSE.txt' -Destination "$release/licenses/VST3-SDK.txt" -Force
     Copy-Item -LiteralPath 'third_party/ADDITIONAL-NOTICES.txt' -Destination "$release/licenses/ADDITIONAL-NOTICES.txt" -Force
-    Compress-Archive -Path "$release/*" -DestinationPath 'build/Shibboleth-0.6.2-Windows-x64.zip' -Force
-    Write-Output 'Created build/Shibboleth-0.6.2-Windows-x64.zip'
+    Compress-Archive -Path "$release/*" -DestinationPath 'build/Shibboleth-0.9.0-Windows-x64.zip' -Force
+    Write-Output 'Created build/Shibboleth-0.9.0-Windows-x64.zip'
 } finally { $env:PATH = $previousPath; Pop-Location }

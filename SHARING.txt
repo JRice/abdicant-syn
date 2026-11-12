@@ -1,4 +1,4 @@
-SHIBBOLETH 0.6.2 - WINDOWS x64
+SHIBBOLETH 0.9.0 - WINDOWS x64
 
 This package contains the same synth in VST3 and CLAP formats.
 No separate CLAP installation is needed for the VST3 version.
@@ -34,6 +34,8 @@ oscillators (two lit pips = original pitch). Resonance has four positions.
 Port at zero retriggers envelopes on every note; above zero uses legato.
 Modwheel controls vibrato; pitch bend is +/-2 semitones. Aftertouch target
 and depth are at the lower right. Options holds shared noise bandwidth.
+Oscillator antialiasing and mixer saturation with memory apply to every patch.
+The upper RES settings respond to the signal level inside the chosen filter.
 Save sounds using your DAW's plug-in state/preset facilities.
 
 VALIDATION
